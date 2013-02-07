@@ -1,0 +1,38 @@
+\documentclass{article}
+\begin{document}
+
+Questions:
+\begin{enumerate}
+\item Do we cite the journal version or the conference version? Many of our classic papers have both.
+\item Becky: do we want a saner bibtex entry naming system (eg file name?).
+\end{enumerate}
+
+This is the paper that started it all: \cite{Guttman:1984:RDI:971697.602266}.
+
+\section{R Tree variants}
+This is an R-tree that's theoretically optimal, avoiding worst-case bounds etc \cite{Arge:2004:PRP:1007568.1007608}.
+Naturally, I think this is very interesting.
+
+The X-Tree! \cite{DBLP:conf/vldb/BerchtoldKK96}.
+
+The R*-tree \cite{Beckmann:1990:RER:93605.98741}.
+
+The R+-tree \cite{DBLP:conf/vldb/SellisRF87}.
+
+\section{Database applications}
+This sounds like a very nice (and thoroughly cited) DB application of R-trees: \cite{Brinkhoff:1993:EPS:170035.170075}
+
+Buffering! More DB stuff, I think: \cite{DBLP:conf/vldb/BiveinisSJ07}.
+
+This is an R-Tree augmented with version history (I think? Obviously still need to read the paper). \cite{Nascimento:1998:THR:330560.330692}.
+
+Packing R-Trees: a much more efficient way of building them, fewer rectangles etc. \cite{Kamel:1993:PR:170088.170403}.
+
+\section{Experiments!}
+This is a modern and not-very-cited paper, but they do stuff we may be interested in:
+\cite{DBLP:conf/ssd/HwangKCL03}.
+
+\bibliography{rtreepapers}
+\bibliographystyle{alpha}
+
+\end{document}
