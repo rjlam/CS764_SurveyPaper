@@ -4,4 +4,4 @@ pdf:
 	pdflatex paper
 	pdflatex paper
 clean:
-	rm -f *.aux *.out *.blg *.log *.bbl
+	rm -f *.aux *.out *.blg *.log *.bbl *~
