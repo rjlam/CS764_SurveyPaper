@@ -7,15 +7,138 @@ we examine the variants and draw appropriate comparisons.
 
 \subsection{R-Trees}
 \label{sec:rtrees}
-In 1984, Guttman first proposed the idea of using minimum bounding rectangles
-(MBR) as a way to restrict the search space during a lookup for spatial data.
+In 1984, Guttman first proposed the idea of modifying the B-tree structure to
+use minimum bounding rectangles (MBR) as a way to restrict the search space 
+during a lookup for spatial data. This data structure is called the R-tree.
+R-trees are structured similarly to B-trees except, instead of having separation
+values in each internal node that divide its subtrees, R-tree internal node
+entries correspond to MBRs that bound its descendents. For instance, the MBR of 
+a particular node completely overlaps the MBRs of the nodes of its child and 
+its child's children. ike in the B-tree case, nodes correspond to disk pages 
+and leaves point to database objects.
 
+R-trees are bound by two parameters $m$ and $M$, the minimum and maximum number
+of entries for each node except the root, respectively. An internal node entry 
+is of the form ($mbr$, $p$), where $mbr$ is the MBR containing the MBRs of its 
+descendents and $p$ is the pointer to its child subtree. The $mbr$ entry is of 
+the form ($I_{0}$, $I_{1}$, ..., $I_{n-1}$), where $n$ is the number of 
+dimensions and $I_{i}$ is of form $[a$,$b]$, a closed bounded interval along 
+the i-th dimension. Similarly, a leaf node entry is of the form ($mbr$, $oid$), 
+where $mbr$ is the MBR containing the object, and oid is the identifier for the 
+object in the database. Finally, the root node must have at least three entries
+except if it is a leaf.
 
-\subsubsection{Search}
+There are multiple operations that are associated with an R-tree, which we 
+discuss in the following sections.
+
+%% Would be nice to have a picture illustrating the R-Tree
+\subsubsection{Search and Update}
+In order to find all entries overlapped by a bounding rectangle $S$ in the 
+R-tree, the pseudocode of Figure~\ref{fig:R_Tree_Search} is used. In a similar 
+fashion to a B-tree traversal, each node in the tree starting from the root is 
+checked for overlap using the $mbr$ field in the entry. If there is overlap, 
+the search descends into the subtree pointed to by $p$ until it reaches a leaf. 
+If the leaf entry's $mbr$ overlaps with $S$, then the object ID $oid$ is 
+returned. Note that there is no worst-case performance guarantee for this
+algorithm.
+
+Updates are slightly more complex. If a tuple is changed such that the MBR
+covering it is also changed, its record in the R-tree must be deleted and then
+reinserted. This makes the cost of an update fairly expensive.
+
+\begin{figure}[t]
+\begin{algorithmic}
+	\Function{Search}{$T$, $S$}
+		\If{$T$ is not a leaf}
+			\ForAll{$E$ in $T$}
+				\If{$E.mbr$ overlaps $S$}
+					\State \Call{Search}{$E.p$, $S$}
+				\EndIf
+			\EndFor
+		\Else
+			\ForAll{$E$ in $T$}
+				\If{$E.mbr$ overlaps $S$}
+					\Return $E.oid$
+				\EndIf
+			\EndFor
+		\EndIf
+	\EndFunction
+\end{algorithmic}
+\caption{Pseudocode for finding all entries in a R-tree rooted at T overlapped by a search rectangle S}
+\label{fig:R_Tree_Search}
+\end{figure}
 
 \subsubsection{Insert}
+Insertion again is similar to B-tree insertion methods, as illustrated by the 
+algorithm in Figure~\ref{fig:R_Tree_Insert}. The algorithm traverses the tree 
+to find the appropriate node to insert into and performs splits when inserting
+into full nodes, but there is one important distinction: node splitting 
+heuristics. B-tree node splitting is simple since it is only necessary to 
+partition the two resulting nodes into two equally sized nodes. In R-trees, the 
+goal typically is to create two nodes such that it is unlikely for both to be
+examined on subsequent searches by minimizing the total area of the MBRs for
+both nodes.
+
+In the original R-tree paper, Guttman discusses three different types of node 
+splitting algorithms: linear, quadratic, and exponential. The first of these
+is described in detail. Essentially, 
+
+
+
+\begin{figure}[t]
+\begin{algorithmic}
+	\Function{Insert}{$T$, $E$}
+		\State \Call{ChooseLeaf}{$T$, $E$}
+		\State \Comment{Traverse tree from $T$ to appropriate leaf.
+			At each level choose node $L$ whose MBR will
+			need the least enlargement to cover E.mbr or
+			if there is a tie, choose node with minimum
+			area. Return $L$
+		}
+		\If{$L$ is not full}
+			\State Insert $E$ into $L$
+		\Else
+			\State \Call{SplitNode}{$L$}
+			\Comment{Returns $L$ and $LL$ containing $E$ and the old
+				entries of $L$}
+		\EndIf
+		\State \Call{AdjustTree}{$L$}
+		\State \Comment{Ascend from leaf node $L$ up to the root $T$
+			and propagate splits. }
+	\EndFunction
+\end{algorithmic}
+\caption{Pseudocode for inserting into an R-tree rooted at T given an entry E}
+\label{fig:R_Tree_Insert}
+\end{figure}
+
 
 \subsubsection{Delete}
+Deletion is handled by the algorithm of Figure~\ref{fig:R_Tree_Delete}. First,
+we find the leaf containing the entry to be deleted. Then, we handle the case
+where nodes are underfull by calling \emph{CondenseTree} on the leaf that held
+the entry. Instead of merging the underfull node with a sibling like in a 
+B-tree, the node is deleted, the other nodes in the leaf are reinserted into 
+the R-tree, and the ancestor MBRs are adjusted accordingly. Guttman argues that
+reinsertion has two advantages; first, it is easier to implement, and second, 
+it prevents deterioration of the R-tree. We will see in other implementations
+of the R-tree that this is not the only strategy for deletion.
+
+\begin{figure}[b]
+\begin{algorithmic}
+\Function{Delete}{$T$, $E$}
+	\State \Call{FindLeaf}{$T$, $E$}
+	\State \Comment{Traverse tree from $T$ to appropriate leaf.
+			Return node $L$ containing $E$}
+	\State Delete $E$ from $L$
+	\State \Call{CondenseTree}{$L$}
+	\State \Comment{Given leaf $L$ where $E$ was deleted, if $L$ was
+	underfull, reinsert other entries in $L$, delete, and propagate changes
+	upward}
+\EndFunction
+\end{algorithmic}
+\caption{Pseudocode for deleting an entry E from an R-tree rooted at T}
+\label{fig:R_Tree_Delete}
+\end{figure}
 
 
 \subsection{R-Tree Variants}
