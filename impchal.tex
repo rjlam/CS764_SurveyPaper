@@ -1,0 +1,44 @@
+While we have seen a complete description of the behavior of the R-tree, in a sense our description is far from complete.
+In this and the next section we will place R-trees in broader contexts.
+
+As the R-tree stores spatial data, implicitly it is designed to support queries based on the spatial relationships of the data.
+Thus, in this section we discuss a variety of spatial queries the R-tree supports, and to what degree of efficiency.
+In moving towards the natural goal of efficient R-trees, we will discuss various successful strategies in optimizing the core data structure.
+As often happens, different settings lead to further specializations and design decisions, so a discussion on the tweaks and other optimizations of R-trees will follow.
+
+In the next section we explore in particular the optimality and formal analysis of R-trees.
+Spatial data is much slipperier than ordered data, and developing a model to explain the behavior of R-trees is a natural motivation after we have seen its various forms.
+On this note we will conclude our discussion on R-tree's state-of-the-art.
+
+\subsection{Basic Queries, Data Model}
+The prototypical R-tree is introduced as storing axis-aligned rectangles: basic spatial data.
+As R-trees store spatial data according to their spatial relationships, it follows that R-trees support spatial queries.
+Just what is a spatial query?
+The quintessential example is the ``intersect-range'' query, where the user supplies an arbitrary, axis-aligned rectangle, and the R-tree returns a list of all rectangles with a non-empty intersection.
+However, a surprising zoo of basic queries have appeared in the literature, and we list them here for better understanding of what may want our R-tree to support.
+[SEE \cite{gaedegunther}., and spatial join paper, and \cite{samet95}].
+
+\subsection{General Optimizations}
+Hopefully it is clear from these diverse applications that it is not enough to pour all our efforts into optimizing for one query.
+It seems difficult to improve an R-tree design over all these objectives, but some general successes have been made:
+[R*, Front-loading, node splitting, space utilization (grafting), and more.]
+
+\subsection{Data-Dependent Optimizations}
+As one considers the nature of the stored data and the nature of the queries, we are able to specialize more.
+[R+, static data, Hilbert gives data ordering (b-tree linearity), using not just distribution but fractal stuff]
+
+\subsection{Extensions to the R-Tree}
+Polygon, X-tree, maybe R+ tree again. DEFINITELY CONCURRENCY.
+
+%
+ %\subsection{What sort of queries}
+ %Find all objects $a \in A$ with $a\cap r\neq \emptyset$.
+ %Spatial join, in infinite varieties. \cite{brinkhoffkriegelseeger93}.
+ %Nearest neighbors \cite{roussopouloskelleyvincent95}.
+ %Big survey on spatial stuff \cite{gaedegunther98}.
+ %Optimal R-tree \cite{argeetal04}.
+ %Index optimization \cite{gavrila94}
+ %Optimal node splitting \cite{garcialopezleutenegger98}
+ %\subsection{Challenges in Fulfilling those queries}
+ %Not very nicely structured.
+ %See \cite{gaedegunther98} for a good overview.

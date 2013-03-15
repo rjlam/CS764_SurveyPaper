@@ -1,7 +1,7 @@
 pdf:
 	pdflatex paper
-#	bibtex paper
+	bibtex paper
 	pdflatex paper
 	pdflatex paper
 clean:
-	rm -f *.aux *.out *.blg *.log *.bbl
+	rm -f *.aux *.out *.blg *.log *.bbl *~
