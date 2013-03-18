@@ -208,7 +208,28 @@ since there may be more than one entry that must be deleted. This means that mul
 leaves may be visited. Essentially, the $Delete$ algorithm traverses the tree using
 the MBR of the entry to delete as the search parameter and when it reaches a leaf, it 
 removes the corresponding entry and propagates the change upward. In 
-\cite{DBLP:conf/vldb/87} the authors do not discuss how they handle underfull nodes.
+\cite{sellisroussopoulosfaloutsos87} the authors do not discuss how they handle underfull nodes.
+
+
+% Insertion
+Insertion is slightly different than the R-tree. Since MBRs do not overlap, an
+object may be added to more than one leaf node, which is not the case in an R-tree. 
+Thus, the insertion algorithm in Figure~\ref{fig:R+_Tree_Insert} is used. We see that
+the function recursively inserts $E$ into all leaves with overlapping MBRs instead of 
+using path traversal to select just one. Note that the algorithm $SplitNode$ is 
+also different from the R-tree algorithm due to the disjoint MBR requirement because
+changes may require downward in addition to upward propagation. 
+
+More specifically, the $SplitNode$ algorithm takes care to partition the entries in 
+the node into two new nodes with non-overlapping MBRs and propagates this change 
+downward and upward, if necessary, using recursive calls to $SplitNode$ on the node's
+children and parents, respectively. For brevity, we do not include the $SplitNode$ 
+algorithm, but we discuss the $Partition$ algorithm of \ref{fig:R+_Tree_Partition} 
+used to determine the regions described by the new nodes in more detail. Basically, 
+costs for cuts in each dimension are calculated using $Sweep$. $Sweep$ calculates the
+cost based on resultant dead space and number of rectangle splits. The cut that has 
+the smallest cost is chosen and the entries in the node to be split are placed 
+according to their MBRs. 
 
 \begin{figure}
 \begin{algorithmic}
@@ -282,7 +303,7 @@ according to their MBRs.
 % Performance comparison
 Compared to R-trees, $R^{+}$-trees have better search performance in certain cases,
 such as when there are many small objects and a few large objects or during point 
-queries, according to the analysis performed in \cite{DBLP:conf/vldb/SellisRF87}. 
+queries, according to the analysis performed in \cite{sellisroussopoulosfaloutsos87}. 
 However, there are also cases in which $R^{+}$-trees have worse search performance. 
 For instance, when there are many large objects in the database that span across many
 MBRs, one object may be replicated across many different nodes which causes range
