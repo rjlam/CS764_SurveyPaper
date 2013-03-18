@@ -34,7 +34,7 @@ The range query is perhaps the simplest spatial query and remains essentially un
 The idea is this: given a database of $R$ spatial objects represented by their MBRs and an input rectangle $s$, output all $r\in R$ such that $r\cap s\neq\emptyset$.
 Described briefly in English: at sub-tree $T$, recurse at each child if that child's MBR has a nonempty intersection with $s$.
 If $T$ is a leaf, output $T$ if it has a nonempty intersection with $s$.
-There exist many variations---perhaps the query is only for objects strictly containing, or contained within, $s$ \cite{gaedegunther95}.
+There exist many variations---perhaps the query is only for objects strictly containing, or contained within, $s$ \cite{gaedegunther98}.
 This general query's popularity has warranted intense study, and extensive tests have compared how R-tree variants perform on different inputs \cite{papadiassellistheodoridisegenhofer95}.
 
 We take the time here to emphasize that even in this fundamental query there exist complications beyond just the various forms the query can take.
@@ -43,8 +43,28 @@ Moreover, this is true even if the range is the degenerate case: the point.
 A surprising fact is that there exist R-trees and queries such that the output is $\emptyset$ but the \emph{whole tree must be traversed}.
 This is true not just for Guttman's initial R-tree, but many advanced types as well (see Theorem 3 of \cite{argeberghaverkortyi04}).
 As testament to its utility, we note that the range query on R-trees was adapted to \emph{approximating similarities between frequencies} \cite{agrawalfaloutsosswami93} by mapping the $k$ major features of the DFT transform into $k$-dimensional space.
+
 \subsection{The Spatial Join}
+A spatial join is nothing more than a general join, just with a spatial predicate---namely, join $r_1$ with $r_2$ iff $r_1\cap r_2\neq\emptyset$ \cite{brinkhoffkriegelseeger93}.
+This is a more general operation than range query---that is, all variations of range queries are easily reducible to the appropriate variant of a spatial join \cite{gaedegunther98}.
+The core spatial join algorithm \cite{brinkhoffkriegelseeger93} follows the same principles as the range query.
+It assumes that the two trees, $R_1$ and $R_2$, are the same height.
+For a given child $n_1\in R_1$ and child $n_2\in R_2$, if $n_1\cap n_2=\emptyset$ it then moves on to the next child in $R_2$.
+Otherwise, we recurse in a DFS fashion.
+Observe that if the MBR are better-clustered in some fashion, we can conclude that $n_1\cap n_2=\emptyset$ at a higher level in the tree, thus saving page accesses.
+There exists a variation of spatial join over R-trees which proceeds in a breadth-first-search fashion \cite{huangjingrundensteiner97}.
+This is motivated by the idea that understanding how the join behaves at level $k$ might better guide the iteration over the pages in level $k+1$.
+The underlying motivation for this alternative is that it is a hard problem to figure out which nodes we ``really'' want to explore, given only the MBRs.
+
 \subsection{The Nearest Neighbor Query}
+The nearest neighbor (NN) query takes as input a point $p$ and outputs the $k$ nearest objects to it (usually under Euclidean distance) \cite{roussopouloskelleyvincent95}.
+The algorithm for NN on R-trees differs from range or join in part because it is not merely doing set-theoretic operations on the data. 
+Rather, at each level of the tree we compute MINDIST, the minimum distance from $p$ to \emph{some} object in the MBR $R$ for each $R$ at that level.
+This naturally leads to a DFS traversal: at level $k$ we computer the MINDIST to each node, sort them in that order, and recurse on the first one.
+Some reasoning about the properties of MINDIST allows for safe pruning of these lists, allowing us to skip many nodes.
+The heuristic of sorting by MINDIST is not optimal---rather, it is ``optimistic'' in the sense that if the MBRs really do reflect the nearest point, it will terminate quite quickly.
+There exist other heuristics as well in the same paper \cite{roussopouloskelleyvincent95}.
+
 \subsection{Optimization Intuition}
 From these three queries, the underlying cause of inefficiency is obvious: that for any non-leaf node, the MBR does not give us all the information we need to know if we should explore it or not.
 If we are wasteful during a range query, it is because our inner node MBRs are so big-but-sparse that we have to search them despite their children's empty intersection.
@@ -65,113 +85,30 @@ As a basic R-tree's construction (and hence performance) is somewhat at the merc
 When faced with the task of splitting a node in a B-tree, the split is obvious.
 When splitting an R-tree node, however, we have the freedom and burden to choose among $\binom{M}{m}$ possible partitions of $M$ data points into 2 sets of size $m=\frac{M}{2}$.
 In conceiving the R-tree Guttman realized the importance of a ``good'' split and proposed three algorithms for it.
-Then R*,R+,Hilbert,Optimal,etc.
+
+The initial \cite{guttman84} followed by the heuristic improvement in R* \cite{beckmannkriegelschneiderseeger90} followed by optimal \cite{garcialopezleutenegger98}.
 
 \paragraph{Static R-Tree Construction}
 These algorithms are all, by necessity, on-line.
 What if we consider the input being provided statically?
 This is far from contrived: the 1930 census data is unlikely to change.
+The paper on bulk loading \cite{garcialopezleutenegger98a}.
+Index optimization \cite{gavrila94}.
+Hilbert R-tree \cite{kamelfaloutsos94}.
 
 
 \paragraph{Applying Static Advancements to Dynamic R-Trees}
+Grafting is a cool advance, but seemingly ignored
 Bulk loading, lazy, grafting, static analysis.
 
 
-\paragraph{Changing the R-tree}
-Understanding the R+, Hilbert tree in this way.
+\paragraph{Avoiding Overlapping MBRs}
+Hilbert R-tree \cite{kamelfaloutsos94}.
+The R+-tree \cite{sellisroussopoulosfaloutsos87}.
 
 \paragraph{Other optimality}
-Space usage.
-
-\paragraph{Super-dynamic}
-Mobile data, constantly changing data, etc.
-
+Improving spatial usage, dense R-trees.
 
 \paragraph{Provable Optimality}
-
-
-
-% While we have seen a complete description of the behavior of the R-tree, in a sense our description is far from complete.
-% In this and the next section we will place R-trees in broader contexts.
-% 
-% As the R-tree stores spatial data, implicitly it is designed to support queries based on the spatial relationships of the data.
-% Thus, in this section we discuss a variety of spatial queries the R-tree supports, and to what degree of efficiency.
-% In moving towards the natural goal of efficient R-trees, we will discuss various successful strategies in optimizing the core data structure.
-% As often happens, different settings lead to further specializations and design decisions, so a discussion on the tweaks and other optimizations of R-trees will follow.
-% 
-% In the next section we explore in particular the optimality and formal analysis of R-trees.
-% Spatial data is much slipperier than ordered data, and developing a model to explain the behavior of R-trees is a natural motivation after we have seen its various forms.
-% On this note we will conclude our discussion on R-tree's state-of-the-art.
-% 
-% \subsection{Basic Queries, Data Model}
-% 
-% The prototypical R-tree is introduced as storing axis-aligned rectangles: basic spatial data.
-% As R-trees store spatial data according to their spatial relationships, it follows that R-trees support spatial queries.
-% This necessitates the question: just what is a spatial query?
-% We list many examples.
-% 
-% The initial---and still ubiquitous---query examples are \keyword{select} and \keyword{join} \cite{gaedegunther98,theodoridisstefanakissellis00}.
-% The \keyword{select} query is a natural extension of the typical \keyword{select} but also taking spatial predicates.
-% A catalog from \cite{gaedegunther98} includes 
-% \begin{itemize}
-% \item Point query, find the set of rectangles $R$ in our R-tree containing point $p$.
-% \item Window query, find the rectangles with non-empty intersection with our rectangle.
-% \item Intersection query, find all rectangles with non-empty intersection with our shape.
-% \item Enclosure query, find all rectangles strictly containing our rectangle.
-% \item Containment query, find all rectangles containing our shape.
-% \item Adjacency query, find all rectangles that are super-next to each other (???)
-% \item Nearest-neighbor.
-% \item Spatial join.
-% \end{itemize}
-% Nearest neighbor queries \cite{roussopouloskelleyvincent95}. Note also \emph{dynamic} variants, big deal.
-% Spatial join \cite{brinkhoffkriegelseeger93}.
-% Skyline computation \cite{papadiastaofuseeger05}.
-% Convex Hull \cite{papadiastaofuseeger05}.
-% Nearest Surrounder \cite{leeleeleong10}.
-% Perimeter \cite{samet95}.
-% 
-% Data model, how do we do it, distributions, etc. Lots of questions.
-% Here's a histogram: \cite{achakeevseeger12}.
-% 
-% How do we insert data?
-% Bulk loading \cite{garcialopezleutenegger98}.
-% Modern bulk loading, see \cite{yi12} for many citations.
-% \subsection{General Optimizations}
-% R-trees are fast, but we can make them faster.
-% First, what do we really mean by fast?
-% Formal model of what makes an R-tree go fast or slow: \cite{theodoridisstefanakissellis00}.
-% Does there exist an optimal R-tree? Yes: \cite{argeberghaverkortyi04}.
-% Areas for optimization: R* has the main points down \cite{beckmannkriegelschneiderseeger90}.
-% Node splitting \cite{garcialopezleutenegger98}.
-% Index optimization \cite{gavrila94}.
-% 
-% Hopefully it is clear from these diverse applications that it is not enough to pour all our efforts into optimizing for one query.
-% It seems difficult to improve an R-tree design over all these objectives, but some general successes have been made:
-% [R*, Front-loading, node splitting, space utilization (grafting), and more.]
-% 
-% \subsection{Data-Dependent Optimizations}
-% As one considers the nature of the stored data and the nature of the queries, we are able to specialize more.
-% [R+, static data, Hilbert gives data ordering (b-tree linearity), using not just distribution but fractal stuff]
-% Dynamic data.
-% 
-% \subsection{Extensions to the R-Tree}
-% Concurrent R-trees \cite{kornackerbanks95}.
-% Historical R-trees \cite{nascimentosilva98}.
-% Nearest neighbor over mobile data, extremely dynamic trees, are a big deal \cite{leeleeleong10}.
-% 
-% 
-% Polygon, X-tree, maybe R+ tree again.
-% Dynamic, constantly-changing spatial data (MOBILE DATA)
-% 
-% %
-%  %\subsection{What sort of queries}
-%  %Find all objects $a \in A$ with $a\cap r\neq \emptyset$.
-%  %Spatial join, in infinite varieties. \cite{brinkhoffkriegelseeger93}.
-%  %Nearest neighbors \cite{roussopouloskelleyvincent95}.
-%  %Big survey on spatial stuff \cite{gaedegunther98}.
-%  %Optimal R-tree \cite{argeetal04}.
-%  %Index optimization \cite{gavrila94}
-%  %Optimal node splitting \cite{garcialopezleutenegger98}
-%  %\subsection{Challenges in Fulfilling those queries}
-%  %Not very nicely structured.
-%  %See \cite{gaedegunther98} for a good overview.
+Basically, talk briefly about the optimal R-tree.
+Or maybe this should be a lead-in to the formal discussion.

@@ -314,7 +314,7 @@ queries to be less efficient.
 
 
 \subsubsection{$R^{*}$-Trees}
-The other major variation of the R-tree is the $R^{*}$-tree of \cite{Beckmann:1990:RER:93597.98741}, which introduces 
+The other major variation of the R-tree is the $R^{*}$-tree of \cite{beckmannkriegelschneiderseeger90}, which introduces 
 some optimization criteria for the data structure. These are listed below:
 
 \begin{description}
@@ -406,7 +406,7 @@ the path chosen results in the least MBR enlargement on internal nodes and the l
 amount of overlap among leaf MBRs. 
 
 Similarly, node splitting also considers the optimization criteria in order to determine
-the split criteria and the distribution of entries among the two groups. In \cite{Beckmann:1990:RER:93597.98741}, 
+the split criteria and the distribution of entries among the two groups. In \cite{beckmannkriegelschneiderseeger90}
 the authors examine three cost functions: total area covered by the resultant MBRs, total
 margin of the resultant MBRs, and the overlapping area of the MBRs. The algorithm decide
 that the algorithm in Figure~\ref{fig:R*-Tree_Split} has the best overall performance. In
@@ -423,7 +423,7 @@ the node centroid is largest and reinserting them using $Insert$.
 The modifications on the $Insert$ algorithm have performance and utilization implications. 
 For one, reinsertion causes decrease in overlap and better storage utilization. However,
 its CPU cost is clearly higher than in R-trees, although the reduction of splits helps 
-contain the I/O cost. In \cite{Beckmann:1990:RER:93597.98741} we find that $R^{*}$-trees outperform other variants 
+contain the I/O cost. In \cite{beckmannkriegelschneiderseeger90} we find that $R^{*}$-trees outperform other variants 
 in terms of disk access and is not sensitive to skewed data distributions. 
 
 % Not sure this fits here.
