@@ -1,10 +1,21 @@
-The flexibility of the R-tree has no doubt contributed to its success.
-[But what about understanding how it actually works?
-Develop a theory of understanding how it behaves.
-Measures of optimality.
-And more.]
+As we have toured the classic enhancements and improvements to R-tree performance, we have encountered experimental data hinting towards when and how R-trees perform well and why.
+In this section we discuss the papers that took that information and worked towards a theory of R-trees.
+There are four parts to our discussion.
+First we discuss the \emph{cost model}---or in other words, what machine-level operations actually take the most time in an R-tree?
+The obvious answer is I/O costs, but spatial queries can have intense CPU requirements.
+Second we consider the data model: what are natural distributions for R-tree data sets?
+What data seems particularly ``bad'' or ``good'', if any.
+From this foundation we move to our third part, in which we introduced the optimal R-tree \cite{argeberghaverkortyi04}, a proven-optimal R-tree.
+Lastly, we consider analytic methods determined to compute the cost of particular queries.
 
-What's a good model for the input?
-Developing a cost model.
-Developing an input model.
-Analyzing the behavior of a query. (See spatial join for statement (p 240, left column) on how it eludes analysis.)
+\subsection{Cost model}
+
+\subsection{Data model}
+A model for the prediction of R-tree performance \cite{theodoridissellis96}, and a later paper \cite{theodoridisstefanakissellis00}.
+
+\subsection{Optimal R-tree}
+Optimal R-tree \cite{argeberghaverkortyi04}.
+Optimal R-tree, high-level \cite{yi12}.
+
+
+\subsection{Query analytics}
