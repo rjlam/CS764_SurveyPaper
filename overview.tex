@@ -188,7 +188,7 @@ internal nodes. Conversely, deletion is slightly more complex than in the R-tree
 since there may be more than one entry that must be deleted. This means that multiple 
 leaves may be visited. Essentially, the $Delete$ algorithm traverses the tree using
 the MBR of the entry to delete as the search parameter and when it reaches a leaf, it 
-removes the corresponding entry and propagates the change upward. In \cite{SellisRoussopoulosFaloutsos86} the authors do not discuss how they handle underfull nodes.
+removes the corresponding entry and propagates the change upward. In \cite{sellisroussopoulosfaloutsos87} the authors do not discuss how they handle underfull nodes.
 
 
 % Insertion
@@ -265,7 +265,7 @@ according to their MBRs.
 % Performance comparison
 Compared to R-trees, $R^{+}$-trees have better search performance in certain cases,
 such as when there are many small objects and a few large objects or during point 
-queries, according to the analysis performed in \cite{DBLP:conf/vldb/SellisRF87}. 
+queries, according to the analysis performed in \cite{sellisroussopoulosfaloutsos87}. 
 However, there are also cases in which $R^{+}$-trees have worse search performance. 
 For instance, when there are many large objects in the database that span across many
 MBRs, one object may be replicated across many different nodes which causes range

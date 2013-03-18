@@ -19,7 +19,7 @@ An example of this is skyline, or dominating points computations.
 Lastly, \keyword{distance} queries consider distance between data elements.
 The exemplar here is nearest-neighbor computation.
 Within these three categories there exists a great many queries.
-Even accounting for the different types of topological relations between MBRs is a daunting task \cite{papadiastheodoridissellisegenhofer95}.
+Even accounting for the different types of topological relations between MBRs is a daunting task \cite{papadiassellistheodoridisegenhofer95}.
 Also note that these categories are not a neat partition: would the ``nearest surrounder'' query be directional or distance?
 
 In light of this overwhelming diversity we will consider just three queries and walk through their execution on an R-tree.
@@ -30,16 +30,19 @@ demonstrate how---despite their differences---these varied queries share similar
 The three queries are \keyword{range}, \keyword{spatial join}, and \keyword{nearest neighbor}.
 
 \subsection{The Range Query}
-The range query is perhaps the simplest spatial query.
+The range query is perhaps the simplest spatial query and remains essentially unchanged since its introduction \cite{guttman84}.
 The idea is this: given a database of $R$ spatial objects represented by their MBRs and an input rectangle $s$, output all $r\in R$ such that $r\cap s\neq\emptyset$.
-The initial algorithm is a straightforward application of the R-tree \cite{guttman84}.
 Described briefly in English: at sub-tree $T$, recurse at each child if that child's MBR has a nonempty intersection with $s$.
 If $T$ is a leaf, output $T$ if it has a nonempty intersection with $s$.
+There exist many variations---perhaps the query is only for objects strictly containing, or contained within, $s$ \cite{gaedegunther95}.
+This general query's popularity has warranted intense study, and extensive tests have compared how R-tree variants perform on different inputs \cite{papadiassellistheodoridisegenhofer95}.
 
-Even in this simple query there lies many complications.
-Immediately it is clear that the output can be anywhere from $\emptyset$ to the whole tree.
-What is not immediately clear is that there exists R-trees and queries such that the output is $\emptyset$ \emph{and} the whole tree must be traversed.
-Thus, even for this simple case it is not immediately possible to have good upper bounds---compare to the obvious $O(\log n)$ upper bound on any empty search-range in a B-tree.
+We take the time here to emphasize that even in this fundamental query there exist complications beyond just the various forms the query can take.
+Some thought reveals that a range query can result in output equal to $\emptyset$ or to the whole tree.
+Moreover, this is true even if the range is the degenerate case: the point.
+A surprising fact is that there exist R-trees and queries such that the output is $\emptyset$ but the \emph{whole tree must be traversed}.
+This is true not just for Guttman's initial R-tree, but many advanced types as well (see Theorem 3 of \cite{argeberghaverkortyi04}).
+As testament to its utility, we note that the range query on R-trees was adapted to \emph{approximating similarities between frequencies} \cite{agrawalfaloutsosswami93} by mapping the $k$ major features of the DFT transform into $k$-dimensional space.
 \subsection{The Spatial Join}
 \subsection{The Nearest Neighbor Query}
 \subsection{Optimization Intuition}
