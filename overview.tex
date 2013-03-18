@@ -8,18 +8,16 @@ commonly used as a baseline for the structures discussed in later sections.
 \subsection{R-Trees}
 \label{sec:rtrees}
 In 1984, Guttman proposed the idea of modifying the B-tree structure to
-use minimum bounding rectangles (MBR) as a method to restrict the search space 
-during a lookup for spatial data\cite{guttman84}. Before this, spatial data was
-represented using structures such as Quad trees\cite{} and k-d trees\cite{}.
-
-The data structure that resulted from Guttman's research
-was called the R-tree. R-trees are structured similarly to B-trees except, instead 
-of having separation values in each internal node that divide its subtrees, R-tree 
-internal node entries correspond to MBRs that bound its descendents. 
-Figure~\ref{fig:R-Tree_structure} shows the R-tree representation for the objects 
-of Figure~\ref{fig:R-Tree_objects}. As we observe, the MBR of a particular node 
-completely overlaps the MBRs of the nodes of its child and its child's children. 
-Like in the B-tree case, nodes correspond to disk pages and leaves point to 
+use minimum bounding rectangles (MBR) as a method to restrict the search space
+during a lookup for spatial data\cite{guttman84}. The data structure that 
+resulted from Guttman's research was called the R-tree. R-trees are structured
+similarly to B-trees except, instead of having separation values in each 
+internal node that divide its subtrees, R-tree internal node entries 
+correspond to MBRs that bound its descendents. 
+Figure~\ref{fig:R-Tree_structure} shows the R-tree representation for the 
+objects of Figure~\ref{fig:R-Tree_objects}. As we observe, the MBR of a 
+particular node entry completely overlaps the MBRs of the entries of its child
+and its child's children. Nodes correspond to disk pages and leaves point to 
 database objects.
 
 \begin{figure}[t]
@@ -184,7 +182,7 @@ of the R-tree that this is not the only strategy for deletion.
 \subsection{R-Trees In Practice: The $R^{*}$-Tree}
 \label{sec:variants}
 In practice, Guttman's original R-tree is not typically used. Instead the 
-$R^{*}$-tree of \cite{Beckmann:1990:RER:93597.98741} is the variant most 
+$R^{*}$-tree of \cite{beckmannkriegelschneiderseeger90} is the variant most 
 commonly used as the baseline structure for R-tree variants. The 
 $R^{*}$-tree introduces four optimization criteria for the data structure. 
 These are listed below:
@@ -279,9 +277,9 @@ amount of overlap among leaf MBRs.
 
 Similarly, node splitting also considers the optimization criteria in order to determine
 the split criteria and the distribution of entries among the two groups. In 
-\cite{Beckmann:1990:RER:93597.98741}, the authors examine three cost functions: total area 
+\cite{beckmannkriegelschneiderseeger90}, the authors examine three cost functions: total area 
 covered by the resultant MBRs, total margin of the resultant MBRs, and the overlapping area 
-of the MBRs. Of the algorithms examined in \cite{Beckmann:1990:RER:93597.98741}, the one in 
+of the MBRs. Of the algorithms examined in \cite{beckmannkriegelschneiderseeger90}, the one in 
 Figure~\ref{fig:R*-Tree_Split} has the best overall performance. In this node splitting 
 function, the axis with that minimizes the margin value is chosen for the split. Then, the 
 distribution with the least area overlap is chosen to distribute entries. Note there is 
@@ -295,7 +293,7 @@ the node centroid is largest and reinserting them using $Insert$.
 The modifications on the $Insert$ algorithm have performance and utilization implications. 
 For one, reinsertion causes decrease in overlap and better storage utilization. However,
 its CPU cost is clearly higher than in R-trees, although the reduction of splits helps 
-contain the I/O cost. In \cite{Beckmann:1990:RER:93597.98741} we find that $R^{*}$-trees 
+contain the I/O cost. In \cite{beckmannkriegelschneiderseeger90} we find that $R^{*}$-trees 
 outperforms the R-tree in terms of disk accesses and is not sensitive to skewed data distributions. 
 
 % Is this necessary?
@@ -304,4 +302,4 @@ In summary, when Guttman introduced the R-tree it quickly became a popular struc
 for spatial queries. Shortly after came the $R^{*}$-tree, which was able to improve query 
 performance and utilization of the R-tree by adding different insertion heuristics and 
 optimization criteria. Thus the $R^{*}$-tree is the base structure on which the variants 
-in Section~\ref{impchal} and Section~\ref{dbchal} try to improve.
+in Section~\ref{sec:impchal} and Section~\ref{sec:dbchal} try to improve.
