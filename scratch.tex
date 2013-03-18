@@ -1,0 +1,133 @@
+At the time, the R-tree  was a great solution to the problem of efficiently searching
+for spatial data in a database; however, there were certain issues with the original
+implementation. For instance, the complexity of the insertion algorithm
+depends on the complexity of the node splitting function, which is typically
+quadratic. Similarly, the heuristics for node splitting affects the efficiency of 
+the search algorithm. These challenges are discussed in detail in 
+Section~\ref{sec:impchal}. In the below sections, we discuss the main R-Tree
+variants that seek to solve some of the disadvantages of the R-tree.
+
+\subsubsection{$R^{+}$-Trees}
+Shortly after Guttman's paper in 1984, Sellis, Roussopoulos, and Faloutsos proposed 
+the $R^{+}$-tree. The problem they sought to solve was the performance degredation 
+during a range search due to high MBR overlap. Basically, the $R^{+}$-tree tries to 
+reduce the number of paths explored (and consequently the number of I/O operations) 
+during a search by disallowing overlap in MBRs in internal nodes of the same level. 
+This means that objects that span across multiple MBRs are stored in multiple leaves. 
+This duplication has several consequences that affect searches, deletion, and insertion.
+
+% Search & Delete
+Searches in $R^{+}$-trees are performed the same as in the R-tree case, except
+redundant entries must be eliminated during a range query. However, in point queries
+$R^{+}$-trees are guaranteed to only traverse one path since no MBRs overlap in 
+internal nodes. Conversely, deletion is slightly more complex than in the R-tree case
+since there may be more than one entry that must be deleted. This means that multiple 
+leaves may be visited. Essentially, the $Delete$ algorithm traverses the tree using
+the MBR of the entry to delete as the search parameter and when it reaches a leaf, it 
+removes the corresponding entry and propagates the change upward. In 
+\cite{sellisroussopoulosfaloutsos87} the authors do not discuss how they handle underfull nodes.
+
+
+% Insertion
+\begin{figure}[t!]
+\begin{algorithmic}
+	\Function{Insert}{$R$, $E$}
+		\If{$R$ is not a leaf}
+			\ForAll{Entries $X$ in $R$}
+				\If{$X.mbr$ overlaps $E.mbr$}
+					\State \Call{Insert}{$X.p$, $E$}
+				\EndIf
+			\EndFor
+		\Else
+			\If {$R$ is full}
+				\State \Call{SplitNode}{$R$}
+			\Else
+			\EndIf
+		\EndIf
+	\EndFunction
+\end{algorithmic}
+\caption{Pseudocode for inserting an entry E given a $R^{+}$-tree rooted at R}
+\label{fig:R+_Tree_Insert}
+\end{figure}
+
+Insertion is slightly different than the R-tree. Since MBRs do not overlap, an
+object may be added to more than one leaf node, which is not the case in an R-tree. 
+Thus, the insertion algorithm in Figure~\ref{fig:R+_Tree_Insert} is used. We see that
+the function recursively inserts $E$ into all leaves with overlapping MBRs instead of 
+using path traversal to select just one. Note that the algorithm $SplitNode$ is 
+also different from the R-tree algorithm due to the disjoint MBR requirement because
+changes may require downward in addition to upward propagation. 
+
+More specifically, the $SplitNode$ algorithm takes care to partition the entries in 
+the node into two new nodes with non-overlapping MBRs and propagates this change 
+downward and upward, if necessary, using recursive calls to $SplitNode$ on the node's
+children and parents, respectively. For brevity, we do not include the $SplitNode$ 
+algorithm, but we discuss the $Partition$ algorithm of \ref{fig:R+_Tree_Partition} 
+used to determine the regions described by the new nodes in more detail. Basically, 
+costs for cuts in each dimension are calculated using $Sweep$. $Sweep$ calculates the
+cost based on resultant dead space and number of rectangle splits. The cut that has 
+the smallest cost is chosen and the entries in the node to be split are placed 
+according to their MBRs. 
+
+
+\begin{figure}[t!]
+\begin{algorithmic}
+	\Function{Partition}{$S$, $ff$}
+		\If{No partition required}
+			\State {$R \Leftarrow$ Node containing $S$}
+			\Return {($R$, empty)}
+		\EndIf
+		\State $O_{x} \Leftarrow$ minimum x coordinate of all r in $S$
+		\State $O_{y} \Leftarrow$ minimum y coordinate of all r in $S$
+		\State $(C_{x}, x_{cut}) \Leftarrow$ \Call {Sweep}{"x", $O_{x}$, $ff$}
+		\State $(C_{y}, y_{cut}) \Leftarrow$ \Call {Sweep}{"y", $O_{y}$, $ff$}
+		\Comment{Starting from $O_{x}$ or $O_{y}$ on its respective axis, pick 
+		the first $ff$ rectangles sorted on the input axis. Return the 
+		cost to split along this axis and the maximum value of the cut}
+		\State $cut \Leftarrow min(Cx, Cy)$
+		\State {Distribute $S$ according to cut}
+		\State $R \Leftarrow$ Node containing entries in first subregion of cut
+		\State $S' \Leftarrow$ Set of rectangles not in $R$ 
+		\Return ($R$, $S'$)
+	\EndFunction
+\end{algorithmic}
+\caption{Pseudocode for partitioning a set of rectangles $S$ and fill factor ff into
+	a node $N$ containing the rectangles of the first subregion and set $S'$ of
+	the remaining rectangles for the $R^{+}$-tree}
+\label{fig:R+_Tree_Partition}
+\end{figure}
+
+% Insertion
+Insertion is slightly different than the R-tree. Since MBRs do not overlap, an
+object may be added to more than one leaf node, which is not the case in an R-tree. 
+Thus, the insertion algorithm in Figure~\ref{fig:R+_Tree_Insert} is used. We see that
+the function recursively inserts $E$ into all leaves with overlapping MBRs instead of 
+using path traversal to select just one. Note that the algorithm $SplitNode$ is 
+also different from the R-tree algorithm due to the disjoint MBR requirement because
+changes may require downward in addition to upward propagation. This means that insertion
+could be potentially very costly.
+
+More specifically, the $SplitNode$ algorithm takes care to partition the entries in 
+the node into two new nodes with non-overlapping MBRs and propagates this change 
+downward and upward, if necessary, using recursive calls to $SplitNode$ on the node's
+children and parents, respectively. For brevity, we do not include the $SplitNode$ 
+algorithm, but we discuss the $Partition$ algorithm of \ref{fig:R+_Tree_Partition} 
+used to determine the regions described by the new nodes in more detail. Basically, 
+costs for cuts in each dimension are calculated using $Sweep$. $Sweep$ calculates the
+cost based on resultant dead space and number of rectangle splits. The cut that has 
+the smallest cost is chosen and the entries in the node to be split are placed 
+according to their MBRs. 
+
+% Performance comparison
+Compared to R-trees, $R^{+}$-trees have better search performance in certain cases,
+such as when there are many small objects and a few large objects or during point 
+queries, according to the analysis performed in \cite{sellisroussopoulosfaloutsos87}. 
+However, there are also cases in which $R^{+}$-trees have worse search performance. 
+For instance, when there are many large objects in the database that span across many
+MBRs, one object may be replicated across many different nodes which causes range
+queries to be less efficient.
+
+
+
+
+

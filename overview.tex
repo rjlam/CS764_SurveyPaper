@@ -1,14 +1,14 @@
 % Overview 
 To solve the problem of performing efficient searchs on spatial data, 
-Guttman proposed the R-tree, which inspired a variety of different 
-variations analagous to the family of B-trees. In Section~\ref{sec:rtrees}
-we describe the original R-tree, and in Section~\ref{sec:variants}
-we examine the variants and draw appropriate comparisons.
+Guttman proposed the R-tree, which inspired a plethora of different 
+variations. In Section~\ref{sec:rtrees} we describe the original R-tree, 
+and in Section~\ref{sec:variants} we discuss the $R^{*}$-tree, the variant most 
+commonly used as a baseline for the structures discussed in later sections.
 
 \subsection{R-Trees}
 \label{sec:rtrees}
-In 1984, Guttman first proposed the idea of modifying the B-tree structure to
-use minimum bounding rectangles (MBR) as a way to restrict the search space 
+In 1984, Guttman proposed the idea of modifying the B-tree structure to
+use minimum bounding rectangles (MBR) as a method to restrict the search space 
 during a lookup for spatial data\cite{guttman84}. Before this, spatial data was
 represented using structures such as Quad trees\cite{} and k-d trees\cite{}.
 
@@ -179,143 +179,15 @@ of the R-tree that this is not the only strategy for deletion.
 \label{fig:R_Tree_Delete}
 \end{figure}
 
-\subsection{R-Tree Variants}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{R-Trees In Practice: The $R^{*}$-Tree}
 \label{sec:variants}
-At the time, the R-tree  was a great solution to the problem of efficiently searching
-for spatial data in a database; however, there were certain issues with the original
-implementation. For instance, the complexity of the insertion algorithm
-depends on the complexity of the node splitting function, which is typically
-quadratic. Similarly, the heuristics for node splitting affects the efficiency of 
-the search algorithm. These challenges are discussed in detail in 
-Section~\ref{sec:impchal}. In the below sections, we discuss the main R-Tree
-variants that seek to solve some of the disadvantages of the R-tree.
-
-\subsubsection{$R^{+}$-Trees}
-Shortly after Guttman's paper in 1984, Sellis, Roussopoulos, and Faloutsos proposed 
-the $R^{+}$-tree. The problem they sought to solve was the performance degredation 
-during a range search due to high MBR overlap. Basically, the $R^{+}$-tree tries to 
-reduce the number of paths explored (and consequently the number of I/O operations) 
-during a search by disallowing overlap in MBRs in internal nodes of the same level. 
-This means that objects that span across multiple MBRs are stored in multiple leaves. 
-This duplication has several consequences that affect searches, deletion, and insertion.
-
-% Search & Delete
-Searches in $R^{+}$-trees are performed the same as in the R-tree case, except
-redundant entries must be eliminated during a range query. However, in point queries
-$R^{+}$-trees are guaranteed to only traverse one path since no MBRs overlap in 
-internal nodes. Conversely, deletion is slightly more complex than in the R-tree case
-since there may be more than one entry that must be deleted. This means that multiple 
-leaves may be visited. Essentially, the $Delete$ algorithm traverses the tree using
-the MBR of the entry to delete as the search parameter and when it reaches a leaf, it 
-removes the corresponding entry and propagates the change upward. In 
-\cite{sellisroussopoulosfaloutsos87} the authors do not discuss how they handle underfull nodes.
-
-
-% Insertion
-Insertion is slightly different than the R-tree. Since MBRs do not overlap, an
-object may be added to more than one leaf node, which is not the case in an R-tree. 
-Thus, the insertion algorithm in Figure~\ref{fig:R+_Tree_Insert} is used. We see that
-the function recursively inserts $E$ into all leaves with overlapping MBRs instead of 
-using path traversal to select just one. Note that the algorithm $SplitNode$ is 
-also different from the R-tree algorithm due to the disjoint MBR requirement because
-changes may require downward in addition to upward propagation. 
-
-More specifically, the $SplitNode$ algorithm takes care to partition the entries in 
-the node into two new nodes with non-overlapping MBRs and propagates this change 
-downward and upward, if necessary, using recursive calls to $SplitNode$ on the node's
-children and parents, respectively. For brevity, we do not include the $SplitNode$ 
-algorithm, but we discuss the $Partition$ algorithm of \ref{fig:R+_Tree_Partition} 
-used to determine the regions described by the new nodes in more detail. Basically, 
-costs for cuts in each dimension are calculated using $Sweep$. $Sweep$ calculates the
-cost based on resultant dead space and number of rectangle splits. The cut that has 
-the smallest cost is chosen and the entries in the node to be split are placed 
-according to their MBRs. 
-
-\begin{figure}
-\begin{algorithmic}
-	\Function{Insert}{$R$, $E$}
-		\If{$R$ is not a leaf}
-			\ForAll{Entries $X$ in $R$}
-				\If{$X.mbr$ overlaps $E.mbr$}
-					\State \Call{Insert}{$X.p$, $E$}
-				\EndIf
-			\EndFor
-		\Else
-			\If {$R$ is full}
-				\State \Call{SplitNode}{$R$}
-			\Else
-			\EndIf
-		\EndIf
-	\EndFunction
-\end{algorithmic}
-\caption{Pseudocode for inserting an entry E given a $R^{+}$-tree rooted at R}
-\label{fig:R+_Tree_Insert}
-\end{figure}
-
-\begin{figure}
-\begin{algorithmic}
-	\Function{Partition}{$S$, $ff$}
-		\If{No partition required}
-			\State {$R \Leftarrow$ Node containing $S$}
-			\Return {($R$, empty)}
-		\EndIf
-		\State $O_{x} \Leftarrow$ minimum x coordinate of all r in $S$
-		\State $O_{y} \Leftarrow$ minimum y coordinate of all r in $S$
-		\State $(C_{x}, x_{cut}) \Leftarrow$ \Call {Sweep}{"x", $O_{x}$, $ff$}
-		\State $(C_{y}, y_{cut}) \Leftarrow$ \Call {Sweep}{"y", $O_{y}$, $ff$}
-		\Comment{Starting from $O_{x}$ or $O_{y}$ on its respective axis, pick 
-		the first $ff$ rectangles sorted on the input axis. Return the 
-		cost to split along this axis and the maximum value of the cut}
-		\State $cut \Leftarrow min(Cx, Cy)$
-		\State {Distribute $S$ according to cut}
-		\State $R \Leftarrow$ Node containing entries in first subregion of cut
-		\State $S' \Leftarrow$ Set of rectangles not in $R$ 
-		\Return ($R$, $S'$)
-	\EndFunction
-\end{algorithmic}
-\caption{Pseudocode for partitioning a set of rectangles $S$ and fill factor ff into
-	a node $N$ containing the rectangles of the first subregion and set $S'$ of
-	the remaining rectangles for the $R^{+}$-tree}
-\label{fig:R+_Tree_Partition}
-\end{figure}
-
-% Insertion
-Insertion is slightly different than the R-tree. Since MBRs do not overlap, an
-object may be added to more than one leaf node, which is not the case in an R-tree. 
-Thus, the insertion algorithm in Figure~\ref{fig:R+_Tree_Insert} is used. We see that
-the function recursively inserts $E$ into all leaves with overlapping MBRs instead of 
-using path traversal to select just one. Note that the algorithm $SplitNode$ is 
-also different from the R-tree algorithm due to the disjoint MBR requirement because
-changes may require downward in addition to upward propagation. This means that insertion
-could be potentially very costly.
-
-More specifically, the $SplitNode$ algorithm takes care to partition the entries in 
-the node into two new nodes with non-overlapping MBRs and propagates this change 
-downward and upward, if necessary, using recursive calls to $SplitNode$ on the node's
-children and parents, respectively. For brevity, we do not include the $SplitNode$ 
-algorithm, but we discuss the $Partition$ algorithm of \ref{fig:R+_Tree_Partition} 
-used to determine the regions described by the new nodes in more detail. Basically, 
-costs for cuts in each dimension are calculated using $Sweep$. $Sweep$ calculates the
-cost based on resultant dead space and number of rectangle splits. The cut that has 
-the smallest cost is chosen and the entries in the node to be split are placed 
-according to their MBRs. 
-
-% Performance comparison
-Compared to R-trees, $R^{+}$-trees have better search performance in certain cases,
-such as when there are many small objects and a few large objects or during point 
-queries, according to the analysis performed in \cite{sellisroussopoulosfaloutsos87}. 
-However, there are also cases in which $R^{+}$-trees have worse search performance. 
-For instance, when there are many large objects in the database that span across many
-MBRs, one object may be replicated across many different nodes which causes range
-queries to be less efficient.
-
-
-
-
-
-\subsubsection{$R^{*}$-Trees}
-The other major variation of the R-tree is the $R^{*}$-tree of \cite{Beckmann:1990:RER:93597.98741}, which introduces 
-some optimization criteria for the data structure. These are listed below:
+In practice, Guttman's original R-tree is not typically used. Instead the 
+$R^{*}$-tree of \cite{Beckmann:1990:RER:93597.98741} is the variant most 
+commonly used as the baseline structure for R-tree variants. The 
+$R^{*}$-tree introduces four optimization criteria for the data structure. 
+These are listed below:
 
 \begin{description}
 	\item[O1: Minimization of area covered by each MBR] Minimize the amount of 
@@ -383,7 +255,7 @@ some optimization criteria for the data structure. These are listed below:
 		\Else
 			\If {$L \neq$ root and no reinsert has been done on this level}
 				\State \Call {ReInsert}{$L$}
-				\Comment {Reinsert the entries whose centroid is furthest
+				\Comment {Reinsert $f$ entries whose centroid is furthest
 					from the node centroid}
 			\Else
 				\State \Call {Split}{$L$}
@@ -406,14 +278,14 @@ the path chosen results in the least MBR enlargement on internal nodes and the l
 amount of overlap among leaf MBRs. 
 
 Similarly, node splitting also considers the optimization criteria in order to determine
-the split criteria and the distribution of entries among the two groups. In \cite{Beckmann:1990:RER:93597.98741}, 
-the authors examine three cost functions: total area covered by the resultant MBRs, total
-margin of the resultant MBRs, and the overlapping area of the MBRs. The algorithm decide
-that the algorithm in Figure~\ref{fig:R*-Tree_Split} has the best overall performance. In
-this node splitting function, the axis with that minimizes the margin value is chosen for
-the split. Then, the distribution with the least area overlap is chosen to distribute the
-entries. Note there is non-trivial cost associated with enumerating the different 
-distributions.
+the split criteria and the distribution of entries among the two groups. In 
+\cite{Beckmann:1990:RER:93597.98741}, the authors examine three cost functions: total area 
+covered by the resultant MBRs, total margin of the resultant MBRs, and the overlapping area 
+of the MBRs. Of the algorithms examined in \cite{Beckmann:1990:RER:93597.98741}, the one in 
+Figure~\ref{fig:R*-Tree_Split} has the best overall performance. In this node splitting 
+function, the axis with that minimizes the margin value is chosen for the split. Then, the 
+distribution with the least area overlap is chosen to distribute entries. Note there is 
+non-trivial cost associated with enumerating the different distributions.
 
 We see in Figure~\ref{fig:R*-Tree_Insert} that leaf selection and node splitting are not
 the only aspects that are different from Guttman's R-tree. We see that the insertion 
@@ -423,16 +295,13 @@ the node centroid is largest and reinserting them using $Insert$.
 The modifications on the $Insert$ algorithm have performance and utilization implications. 
 For one, reinsertion causes decrease in overlap and better storage utilization. However,
 its CPU cost is clearly higher than in R-trees, although the reduction of splits helps 
-contain the I/O cost. In \cite{Beckmann:1990:RER:93597.98741} we find that $R^{*}$-trees outperform other variants 
-in terms of disk access and is not sensitive to skewed data distributions. 
+contain the I/O cost. In \cite{Beckmann:1990:RER:93597.98741} we find that $R^{*}$-trees 
+outperforms the R-tree in terms of disk accesses and is not sensitive to skewed data distributions. 
 
-% Not sure this fits here.
-%\subsubsection{Hilbert R-Tree}
-
-\subsubsection{Summary}
+% Is this necessary?
+\subsection{Summary}
 In summary, when Guttman introduced the R-tree it quickly became a popular structure
-for efficient spatial queries. It spawned several main variants, the $R^{+}$-tree
-and the $R^{*}$-tree, were able to improve query performance, and utilization of
-the R-tree by adding different insertion heuristics. These touch on some of the 
-major implementation issues of the R-tree, which we discuss in the following 
-sections.
+for spatial queries. Shortly after came the $R^{*}$-tree, which was able to improve query 
+performance and utilization of the R-tree by adding different insertion heuristics and 
+optimization criteria. Thus the $R^{*}$-tree is the base structure on which the variants 
+in Section~\ref{impchal} and Section~\ref{dbchal} try to improve.
