@@ -1,2 +1,63 @@
-Emerging applications. Google geo hash. the brain thing. spatio temporal stuff. GPU.
-parallel and distributed databases
+The discussion thus far has focused on spatial data in the domain of a single
+process. We now extend the scope of our survey of R-trees into the topics of
+parallel systems, spatiotemporal databases, and emerging applications.
+
+% Went for a weird title..... can be changed :P
+\subsection{R-trees in the Parallel Universe}
+Before we begin our overview of R-trees in a parallel environment, we first 
+explain some basic definitions. There are three levels of resource sharing in
+a parallel system: shared everything, shared disk, and shared nothing
+\cite{theBook}. Shared everything means that all processors share all 
+resources including disk and memory. Shared disk means that each processor 
+has its own private memory but share disks. Unsurprisingly, shared nothing 
+architectures have private memory and disk for each processor, which
+communicate using some type of network. Thus the basic challenge for R-tree 
+implementation in such systems boils down to exploiting parallelism to 
+increase both CPU and I/O performance. In the following sections we discuss
+methods that are used in multidisk, single-cpu systems, R-tree variants used 
+in multiprocessor systems, and operations in parallel databases.
+
+\subsubsection{Multidisk Systems}
+
+\subsubsection{Multiprocessor Systems}
+
+\subsubsection{Operations}
+
+\begin{description}
+	\item[yoyoyo] hello
+\end{description}
+
+\subsection{R-trees in Spatiotemporal Databases}
+There is extensive research for using R-tree variants in spatiotemporal
+databases. Essentially spatiotemporal databases add time as an extra dimension
+in addition to spatial data. This added dimensionality creates new challenges
+[add more to this]. 
+
+The R-tree variants used in spatiotemporal databases can be categorized based
+on the time used for indexing data. Structures may index historical 
+spatiotemporal data, current data, or future data. These are described more
+in detail below.
+
+\subsubsection{Indexing Historical Data}
+
+\subsubsection{Indexing Current Data}
+
+\subsubsection{Indexing Current and Future Positions}
+The main focus of the variants in this section is to keep track of the current
+and future locations of objects. This is suitable for worksets in which 
+objects have predictable behavior such as projectile motion and traveling in
+straight lines.
+
+\subsubsection{Operations}
+Querying moving data?
+Clustering
+
+\subsection{Applications}
+\begin{description}
+	\item[Spatial datamining]
+	\item[Geospatial data / geographic information systems]
+	\item[Science and medicine]
+	\item[Cloud computing]
+	\item[Commercial Systems] Oracle, IBM, PostGreSQL, SQLite
+\end{description}
+
