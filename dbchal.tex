@@ -6,16 +6,39 @@ The obvious answer is I/O costs, but spatial queries can have intense CPU requir
 Second we consider the data model: what are natural distributions for R-tree data sets?
 What data seems particularly ``bad'' or ``good'', if any.
 From this foundation we move to our third part, in which we introduced the optimal R-tree \cite{argeberghaverkortyi04}, a proven-optimal R-tree.
-Lastly, we consider analytic methods determined to compute the cost of particular queries.
 
 \subsection{Cost model}
+Spatial data lacks a strict ordering---this seems to be the main reason why it is so ``complicated'' to work with \cite{stuff}.
+The R-tree's many advancements have allowed it to perform well in practice \cite{thebook}, but there is an underlying question: how do we know if the R-tree is organized well?
+We have seen that imposing a linear ordering can greatly improve performance \cite{kamelfaloutsos94} and there are still new results and questions about possible orderings \cite{haverkortwalderveen11}.
+Indeed, the initial models for R-trees were largely dependent on the R-tree's construction; but this quality is incidental to the data \cite{see:list:in:theodoridisstefanakissellis}.
+
+We move past ``index-dependent'' models, for Theodoridis et. al.\ \cite{theodoridissellis96,theodoridisstefanakissellis00} developed a cost model for \emph{range} and \emph{join} queries that depended only on some parameters of the data.
+In particular, it depended on the number of elements in the dataset (cardinality) and the spatial density of those rectangles.
+Moreover, this was one of the first papers to move beyond the assumption that the data was uniformly distributed.
+A key concept was the notion of a \emph{density surface}, a partition of the data space into smaller chunks in which density is estimated---a density histogram, really.
+Other authors focused on fractal dimensions [TO ADD].
+
+\subsubsection{Spatial Histograms}
+In practice, of course, one needs to maintain useful meta-data for query optimization \cite{chaudhuri98}, and the histogram is one of the main tools for that \cite{poosalahaasioannidisshekita96}.
+R-trees can be used \emph{as} spatial histograms \cite{achakeevseeger12}, and serves to estimate a cost of a \emph{range} query.
+Theis spatial histogram is to partition the data rectangles $r_1,\ldots,r_N$ into buckets, each bucket maintaining the average $x,y$ lengths of its constituents $r_i,\ldots,r_j$ and the bucket's density.
+Implied by its having a density, the bucket induces an MBR over its rectangles $r_i,\ldots,r_j$.
+In in their paper \cite{achakeevseeger12}, the authors decide on an equi-depth histogram.
+This is complicated by the fact that computing their optimal partition is $\NP$-hard \cite{muthukrishnanpoosalasuel99}.
+There design, guided by the cost-model of \cite{theodoridissellis96}, was thus computed with heuristics; the details are in \cite{achakeevseeger12a}.
+
+There also exist histograms for the purpose of estimating, say, a join \cite{aboulnaganaughton00}.
+Also takes into account other stuff.
+Some experimental models: \cite{aboulnaganaughton00}, \cite{anyangsivasubramaniam01}, \cite{achakeevseeger12,achakeevseeger12a} has good datasets discussion, see for ``data model''.
 
 \subsection{Data model}
-A model for the prediction of R-tree performance \cite{theodoridissellis96}, and a later paper \cite{theodoridisstefanakissellis00}.
+Are there data models that are good or bad? Stabbing number (computing it is hard, find that math paper), assuming squareness (an early assumption), other things?
+What sort of distributions are typically considered?
+Compare/contrast with B-tree distributions.
+Theory of hilbertization \cite{haverkortwalderveen11}.
 
 \subsection{Optimal R-tree}
 Optimal R-tree \cite{argeberghaverkortyi04}.
 Optimal R-tree, high-level \cite{yi12}.
-
-
-\subsection{Query analytics}
+Optimizing for minimal stabbing number \cite{bergkhosraviverdonschotweele11}.
