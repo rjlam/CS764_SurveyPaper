@@ -1,6 +1,7 @@
 The discussion thus far has focused on spatial data in the domain of a single
-process. We now extend the scope of our survey of R-trees into the topics of
-parallel systems, spatiotemporal databases, and applications of R-trees.
+processor system with the R-tree stored all on one disk. We now extend the 
+scope of our survey of R-trees into the topics of parallel systems, 
+spatiotemporal databases, and applications of R-trees.
 
 % Went for a weird title..... can be changed :P
 \subsection{R-trees in the Parallel Universe}
@@ -79,22 +80,27 @@ issues.
 \subsubsection{Master-Client R-trees}
 \cite{schnitzer1999master}
 
+%Other trees from before 2005?
+%\subsubsection{}
+
 \subsubsection{P2PR-Tree}
+% From 2005! cool!
 \cite{mondal2005p2pr}
 
 \subsubsection{SD-Rtree}
-% from 2007! cool right?
+% from 2007! cooler!
 \cite{du2007sd}
 
 % ACID?
-\subsubsection{Implementation Issues}
+\subsection{Parallel System Implementation Issues}
 With the introduction of additional processes in a database there inherently
 comes the issue of correctness. Operations may contend for the same data 
 structure and without some method of concurrency control we have no guarantees
-on the data in the database. We focus on three topics: concurrency control,
-recovery, and data migration. 
+on the data in the database. We focus on the topics of query processing, 
+concurrency control, recovery, and data migration. 
 
 \begin{description}
+	\item[Query Processing]
 	\item[Concurrency Control]
 	\item[Recovery]
 	\item[Data Migration]
@@ -130,12 +136,21 @@ Challenges:
 Querying moving data?
 Clustering
 
+
 \subsection{Applications}
+R-tree variants are used in a vast variety of different applications including
+but not exclusive to spatial datamining, geographic information systems, 
+science and medicine, and cloud computing. We list some examples of R-trees
+and variants used in these fields below.
+
 \begin{description}
 	\item[Spatial datamining]
-	\item[Geospatial data / geographic information systems]
+	
+	\item[Geographic information systems]
 	\item[Science and medicine]
 	\item[Cloud computing]
-	\item[Commercial Systems] Oracle, IBM, PostGreSQL, SQLite
 \end{description}
 
+R-trees are also available in some form in many popular open source and 
+commercial databases including MySQL Server, SQLite, Oracle$\textsuperscript{\textregistered}$ Spatial, IBM$\textsuperscript{\textregistered}$ DB2, and 
+PostgreSQL. 
