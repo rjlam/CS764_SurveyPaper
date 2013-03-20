@@ -1,1 +1,156 @@
-cool topics like parallelism, concurrency, emerging applications
+The discussion thus far has focused on spatial data in the domain of a single
+processor system with the R-tree stored all on one disk. We now extend the 
+scope of our survey of R-trees into the topics of parallel systems, 
+spatiotemporal databases, and applications of R-trees.
+
+% Went for a weird title..... can be changed :P
+\subsection{R-trees in the Parallel Universe}
+Before we begin our overview of R-trees in a parallel environment, we first 
+explain some basic definitions. There are three levels of resource sharing in
+a parallel system: shared everything, shared disk, and shared nothing
+\cite{thebook}. Shared everything means that all processors share all 
+resources including disk and memory. Shared disk means that each processor 
+has its own private memory but share disks. Unsurprisingly, shared nothing 
+architectures have private memory and disk for each processor, which
+communicate using some type of network. Thus the basic challenge for R-tree 
+implementation in such systems boils down to exploiting parallelism to 
+increase both CPU and I/O performance. In the following sections we discuss
+R-trees in multidisk, single-cpu systems and in multiprocessor systems.
+
+\subsection{R-trees in Multidisk Systems}
+The architecture of a multidisk system consists of a single processor and 
+multiple disks. The focus then in these types of systems is I/O parallelism
+and how to partition data to maximize performance while maintaining good load
+balance. Below are a few structures that fall under this category.
+
+\subsubsection{Independent R-trees}
+The independent R-tree method \cite{kamel1992parallel}\cite{thebook} uses separate R-tree structures for each disk.
+Data is distributed using two approaches: data distribution and space 
+partitioning. The former uses hashing or round-robin (RR) to assign disks to
+R-tree entries. The second partitions the R-tree into sections such that 
+child nodes reside on the same disk as their parents. The first approach 
+has good data load distribution but poor locality, whereas the second approach
+has good locality but could have worse throughput on large queries.
+
+\subsubsection{Super-node R-tree}
+In the super-node method \cite{kamel1992parallel}\cite{thebook} there is only
+one R-tree structure for the system. Each node in the structure consists of
+\emph{d} pages distributed across \emph{d} disks. When node is accessed, each
+page of the node (one page per disk) is read in parallel. This has the 
+advantage of good load balancing, but it has the disadvantage of
+always touching every disk regardless of the query.
+
+\subsubsection{Multiplexed R-tree}
+\cite{kamel1992parallel} tackles the problem of data partitioning with the 
+multiplexed R-tree (MX R-tree), which is essentially the same as the R-tree 
+in \cite{guttman84} but distributes the nodes across different disks. 
+The root node always resides in main memory, and all other nodes reside on 
+disk. Cross-disk pointers are used to refer to child nodes residing in 
+different disks. 
+
+Disk assignment is performed with the conflicting criteria of
+data balance, where the number of nodes are partitioned equally across disks, 
+area balance, where the total area covered by each disk is approximately 
+equal, and proximity, where close nodes are put on separate disks in order to
+maximize throughput. \cite{kamel1992parallel} examines several placement 
+heuristics but determines that proximity index (PI) has the best performance. 
+The proximity index is essentially a measure of the probability that two MBRs
+will be retrieved by the same query. Thus in the PI scheme nodes are assigned 
+to disk with the proximity index with data balance as the tiebreaker criteria.
+
+\cite{kamel1992parallel} determines that the MX R-tree is outperforms the two
+other methods of node-to-disk distribution both in terms of query latency and
+load.
+ 
+\subsection{R-trees in Multiprocessor systems}
+More recent research has focused on multiprocessor systems, especially in 
+lieu of the growing popularity of distributed services. And development of 
+multicpu processors. 
+The multiprocessor system, unlike the multidisk system, consists of multiple 
+processors. This could be in either a multicore machine in a shared-resource
+environment or a distributed system with many machines in a share-nothing 
+environment. As before, there is a tradeoff between performance and load 
+balancing; however, in this case scalability, availability, and consistency
+are additional challenges. We examine several R-tree variants that exist in
+this domain and also discuss R-trees in the context of parallel implementation
+issues.
+
+%Shared something R-trees
+%Shared nothing R trees
+\subsubsection{Master-Client R-trees}
+\cite{schnitzer1999master}
+
+%Other trees from before 2005?
+%\subsubsection{}
+
+\subsubsection{P2PR-Tree}
+% From 2005! cool!
+\cite{mondal2005p2pr}
+
+\subsubsection{SD-Rtree}
+% from 2007! cooler!
+\cite{du2007sd}
+
+% ACID?
+\subsection{Parallel System Implementation Issues}
+With the introduction of additional processes in a database there inherently
+comes the issue of correctness. Operations may contend for the same data 
+structure and without some method of concurrency control we have no guarantees
+on the data in the database. We focus on the topics of query processing, 
+concurrency control, recovery, and data migration. 
+
+\begin{description}
+	\item[Query Processing]
+	\item[Concurrency Control]
+	\item[Recovery]
+	\item[Data Migration]
+\end{description}
+
+\subsection{R-trees in Spatiotemporal Databases}
+There is extensive research for using R-tree variants in spatiotemporal
+databases. Essentially spatiotemporal databases add time as an extra dimension
+in addition to spatial data. This added dimensionality creates new challenges
+[add more to this]. 
+
+The R-tree variants used in spatiotemporal databases can be categorized based
+on the time used for indexing data. Structures may index historical 
+spatiotemporal data, current data, or future data. These are described more
+in detail below.
+
+\subsubsection{Indexing Historical Data}
+challenges: growing history
+
+
+\subsubsection{Indexing Current Data}
+challenges: most recent copy
+
+\subsubsection{Indexing Current and Future Positions}
+The main focus of the variants in this section is to keep track of the current
+and future locations of objects. This is suitable for worksets in which 
+objects have predictable behavior such as projectile motion and traveling in
+straight lines.
+
+Challenges:
+
+\subsubsection{Database Operations}
+Querying moving data?
+Clustering
+
+
+\subsection{Applications}
+R-tree variants are used in a vast variety of different applications including
+but not exclusive to spatial datamining, geographic information systems, 
+science and medicine, and cloud computing. We list some examples of R-trees
+and variants used in these fields below.
+
+\begin{description}
+	\item[Spatial datamining]
+	
+	\item[Geographic information systems]
+	\item[Science and medicine]
+	\item[Cloud computing]
+\end{description}
+
+R-trees are also available in some form in many popular open source and 
+commercial databases including MySQL Server, SQLite, Oracle$\textsuperscript{\textregistered}$ Spatial, IBM$\textsuperscript{\textregistered}$ DB2, and 
+PostgreSQL. 

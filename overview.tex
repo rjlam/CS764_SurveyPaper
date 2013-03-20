@@ -8,18 +8,16 @@ commonly used as a baseline for the structures discussed in later sections.
 \subsection{R-Trees}
 \label{sec:rtrees}
 In 1984, Guttman proposed the idea of modifying the B-tree structure to
-use minimum bounding rectangles (MBR) as a method to restrict the search space 
-during a lookup for spatial data\cite{guttman84}. Before this, spatial data was
-represented using structures such as Quad trees\cite{} and k-d trees\cite{}.
-
-The data structure that resulted from Guttman's research
-was called the R-tree. R-trees are structured similarly to B-trees except, instead 
-of having separation values in each internal node that divide its subtrees, R-tree 
-internal node entries correspond to MBRs that bound its descendents. 
-Figure~\ref{fig:R-Tree_structure} shows the R-tree representation for the objects 
-of Figure~\ref{fig:R-Tree_objects}. As we observe, the MBR of a particular node 
-completely overlaps the MBRs of the nodes of its child and its child's children. 
-Like in the B-tree case, nodes correspond to disk pages and leaves point to 
+use minimum bounding rectangles (MBR) as a method to restrict the search space
+during a lookup for spatial data\cite{guttman84}. The data structure that 
+resulted from Guttman's research was called the R-tree. R-trees are structured
+similarly to B-trees except, instead of having separation values in each 
+internal node that divide its subtrees, R-tree internal node entries 
+correspond to MBRs that bound its descendents. 
+Figure~\ref{fig:R-Tree_structure} shows the R-tree representation for the 
+objects of Figure~\ref{fig:R-Tree_objects}. As we observe, the MBR of a 
+particular node entry completely overlaps the MBRs of the entries of its child
+and its child's children. Nodes correspond to disk pages and leaves point to 
 database objects.
 
 \begin{figure}[t]
