@@ -8,7 +8,7 @@ What data seems particularly ``bad'' or ``good'', if any.
 From this foundation we move to our third part, in which we introduced the optimal R-tree \cite{argeberghaverkortyi04}, a proven-optimal R-tree.
 
 \subsection{Cost model}
-Spatial data lacks a strict ordering---this seems to be the main reason why it is so ``complicated'' to work with \cite{stuff}.
+Spatial data lacks a strict ordering---this seems to be the main reason why it is so ``complicated'' to work with \cite{gaedegunther98}.
 The R-tree's many advancements have allowed it to perform well in practice \cite{thebook}, but there is an underlying question: how do we know if the R-tree is organized well?
 We have seen that imposing a linear ordering can greatly improve performance \cite{kamelfaloutsos94} and there are still new results and questions about possible orderings \cite{haverkortwalderveen11}.
 Indeed, the initial models for R-trees were largely dependent on the R-tree's construction; but this quality is incidental to the data \cite{see:list:in:theodoridisstefanakissellis}.
@@ -18,6 +18,9 @@ In particular, it depended on the number of elements in the dataset (cardinality
 Moreover, this was one of the first papers to move beyond the assumption that the data was uniformly distributed.
 A key concept was the notion of a \emph{density surface}, a partition of the data space into smaller chunks in which density is estimated---a density histogram, really.
 Other authors focused on fractal dimensions [TO ADD].
+
+It is important to add that for much of our discussion---and often in the literature---we assume the data held in R-trees is well-represented by the MBR of the leaf representing it.
+However, sometimes those shapes can be quite different, and we must take into account the actual geometric complexity of the leaves when considering the cost \cite{aboulnaganaughton00}.
 
 \subsubsection{Spatial Histograms}
 In practice, of course, one needs to maintain useful meta-data for query optimization \cite{chaudhuri98}, and the histogram is one of the main tools for that \cite{poosalahaasioannidisshekita96}.
@@ -42,3 +45,4 @@ Theory of hilbertization \cite{haverkortwalderveen11}.
 Optimal R-tree \cite{argeberghaverkortyi04}.
 Optimal R-tree, high-level \cite{yi12}.
 Optimizing for minimal stabbing number \cite{bergkhosraviverdonschotweele11}.
+Big discussion: why doesn't this have a formal link to our ``design intuition'' of the previous section?

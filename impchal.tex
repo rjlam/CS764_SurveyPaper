@@ -17,12 +17,14 @@ One broad classification scheme groups queries into three types.
 \keyword{Topological} queries are based on basic geometric properties of the data.
 The quintessential \keyword{range} query falls into this category.
 \keyword{Directional} queries involve predicates of the form ``above'', or ``east''---filtering according to global positions.
-An example of this is skyline, or dominating points computations.
+An example of this is skyline \cite{papadiastaofuseeger05}, or dominating points computations.
 Lastly, \keyword{distance} queries consider distance between data elements.
-The exemplar here is nearest-neighbor computation.
+The exemplar here is nearest-neighbor computation \cite{roussopouloskelleyvincent95}.
 Within these three categories there exists a great many queries.
 Even accounting for the different types of topological relations between MBRs is a daunting task \cite{papadiassellistheodoridisegenhofer95}.
-Also note that these categories are not a neat partition: would the ``nearest surrounder'' query be directional or distance?
+Also note that these categories are not a neat partition: would the ``nearest surrounder'' \cite{leeleeleong10} query be directional or distance?
+
+\subsection{Example Queries}
 
 In light of this overwhelming diversity we will consider just three queries and walk through their execution on an R-tree.
 The goals of this in-depth examination are three:
@@ -31,7 +33,7 @@ demonstrate how R-trees can service very different queries;
 demonstrate how---despite their differences---these varied queries share similar bottlenecks in the R-tree, implying general optimizations are possible.
 The three queries are \keyword{range}, \keyword{spatial join}, and \keyword{nearest neighbor}.
 
-\subsection{The Range Query}
+\paragraph{The Range Query}
 The range query is perhaps the simplest spatial query and remains essentially unchanged since its introduction \cite{guttman84}.
 The idea is this: given a database of $R$ spatial objects represented by their MBRs and an input rectangle $s$, output all $r\in R$ such that $r\cap s\neq\emptyset$.
 Described briefly in English: at sub-tree $T$, recurse at each child if that child's MBR has a nonempty intersection with $s$.
@@ -46,24 +48,28 @@ A surprising fact is that there exist R-trees and queries such that the output i
 This is true not just for Guttman's initial R-tree, but many advanced types as well (see Theorem 3 of \cite{argeberghaverkortyi04}).
 As testament to its utility, we note that the range query on R-trees was adapted to \emph{approximating similarities between frequencies} \cite{agrawalfaloutsosswami93} by mapping the $k$ major features of the DFT transform into $k$-dimensional space.
 
-\subsection{The Spatial Join}
+\paragraph{The Spatial Join}
 A spatial join is nothing more than a general join, just with a spatial predicate---namely, join $r_1$ with $r_2$ iff $r_1\cap r_2\neq\emptyset$ \cite{brinkhoffkriegelseeger93}.
-This is a more general operation than range query---that is, all variations of range queries are easily reducible to the appropriate variant of a spatial join \cite{gaedegunther98}.
+This is a more general operation than range query---that is, range queries are easily reducible to the appropriate variant of a spatial join \cite{gaedegunther98}.
 The core spatial join algorithm \cite{brinkhoffkriegelseeger93} follows the same principles as the range query.
 It assumes that the two trees, $R_1$ and $R_2$, are the same height.
 For a given child $n_1\in R_1$ and child $n_2\in R_2$, if $n_1\cap n_2=\emptyset$ it then moves on to the next child in $R_2$.
 Otherwise, we recurse in a DFS fashion.
 Observe that if the MBR are better-clustered in some fashion, we can conclude that $n_1\cap n_2=\emptyset$ at a higher level in the tree, thus saving page accesses.
+
 There exists a variation of spatial join over R-trees which proceeds in a breadth-first-search fashion \cite{huangjingrundensteiner97}.
 This is motivated by the idea that understanding how the join behaves at level $k$ might better guide the iteration over the pages in level $k+1$.
 The underlying motivation for this alternative is that it is a hard problem to figure out which nodes we ``really'' want to explore, given only the MBRs.
+[Other variations.]
+Of course, there exist experimental comparisons between these variations \cite{papadopoulosrigauxscholl99}, and at the time they concluded buffer size was the main focus point.
 
-See also \cite{papadopoulosrigauxscholl99} for evaluating different spatial joins on varios R-tree variants.
-See also \cite{vassilakopouloscorralkaranikolas11} for join within a single R-tree, self-joins.
-Find a paper (there are many) that say join reasoning from B-trees don't naturally extend to R-trees.
+A more modern survey \cite{jacoxsamet07} has a thorough accounting of more recent approaches to spatial join.
+[What's a nice summary it can give.]
+
+There are still more modern variations of spatial join being considered, see \cite{vassilakopouloscorralkaranikolas11} for join within a single R-tree, self-joins.
 Huge survey \cite{jacoxsamet07}.
 
-\subsection{The Nearest Neighbor Query}
+\paragraph{The Nearest Neighbor Query}
 The nearest neighbor (NN) query takes as input a point $p$ and outputs the $k$ nearest objects to it (usually under Euclidean distance) \cite{roussopouloskelleyvincent95}.
 The algorithm for NN on R-trees differs from range or join in part because it is not merely doing set-theoretic operations on the data. 
 Rather, at each level of the tree we compute MINDIST, the minimum distance from $p$ to \emph{some} object in the MBR $R$ for each $R$ at that level.
@@ -72,9 +78,11 @@ Some reasoning about the properties of MINDIST allows for safe pruning of these 
 The heuristic of sorting by MINDIST is not optimal---rather, it is ``optimistic'' in the sense that if the MBRs really do reflect the nearest point, it will terminate quite quickly.
 There exist other heuristics as well in the same paper \cite{roussopouloskelleyvincent95}.
 
-See also \cite{corralalmendros-jimenez07}, comparisons between R-tree performance on various distance queries.
+The NN query is the basic distance query for other distance queries such as spatial aggregate queries (perimiter, average-area, and so on) \cite{corralalmendros-jimenez07}.
+
 
 \subsection{Optimization Intuition}
+
 From these three queries, the underlying cause of inefficiency is obvious: that for any non-leaf node, the MBR does not give us all the information we need to know if we should explore it or not.
 If we are wasteful during a range query, it is because our inner node MBRs are so big-but-sparse that we have to search them despite their children's empty intersection.
 We can be wasteful during a join for much the same reason.
@@ -89,65 +97,162 @@ However, this is \emph{not} the case at all for R-trees.
 Given $I$ and $I\prime$, the R-trees $R_I$ and $R_{I\prime}$ may wildly differ in terms of the inner nodes created.
 Thus our idea of growing an R-tree in a ``smarter'' fashion has real meaning.
 
-\paragraph{Node Splitting}
-As a basic R-tree's construction (and hence performance) is somewhat at the mercy of its insertion order, a natural first step to improving R-trees is to take the time to split nodes so that the tree maintains a good structure.
-When faced with the task of splitting a node in a B-tree, the split is obvious.
-When splitting an R-tree node, however, we have the freedom and burden to choose among $\binom{M}{m}$ possible partitions of $M$ data points into 2 sets of size $m=\frac{M}{2}$.
-In conceiving the R-tree Guttman realized the importance of a ``good'' split and proposed three algorithms for it.
-The initial \cite{guttman84} followed by the heuristic improvement in R* \cite{beckmannkriegelschneiderseeger90} followed by optimal \cite{garcialopezleutenegger98}.
-This isn't the end-all be-all, as 
-
-More persistent tree improvement (how dose this mesh with ``applying static advancements''?).
-See \cite{leehsujensencuiteo03} for more tree reorg.
-
-Simplifying splits: have a strict ordering, see \cite{kamelfaloutsos94}.
 
 
-\paragraph{Static R-Tree Construction}
-In our concern for computing a good split as the R-tree recieves new data, we are naturally tempted to imagine the situation where the data is unchanging, static.
-This is far from contrived: the 1930s US census data is unlikely to change.
-The paper on bulk loading \cite{garcialopezleutenegger98a}.
-Index optimization \cite{gavrila94}.
-Hilbert R-tree \cite{kamelfaloutsos94}.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\paragraph{Optimizing Dynamic Space Usage}
-In our considering static R-trees, we have seen the utility of dense packing.
-Intuitively, if the tree is dense, there are fewer nodes (perhaps even fewer layers), and so we have less tree to check.
-This gives us motivation for improving space usage in dynamic R-trees: not to \%100 of course, but in read-heavy loads B-trees benefit from more density, so it is natural to be curious if we can make the same improvements for R-trees.
-Improving spatial usage, dense R-trees.
-The only citation from \cite{thebook} is \cite{huanglinlin01}.
-I bet more have arrived.
-Dynamic Hilbert R-tree from \cite{kamelfaloutsos94}, the classic.
+\paragraph{Reducing Overlap}
+Perhaps the most common guiding principle for growing R-trees efficiently is to reduce the overlap between MBRs.
+In our discussion we consider only range queries---this is both one of the few queries for which we have a strong understanding, and is fundamental enough to reasonably assume its efficiency influences more complex queries.
 
-\paragraph{Applying Static Advancements to Dynamic R-Trees}
-Grafting is a cool advance, but seemingly ignored \cite{schrekchen00}.
-Observe that R* has some satic improvements \cite{beckmannkriegelschneiderseeger90}.
+Note that, as MBRs on different levels are either wholly contained or entirely disjoint from one another, when we discuss overlap between MBRs we assume they are on the same level of the R-tree.
+The only exception, of course, are the MBRs for the leaves.
+Guttman \cite{guttman84} presumed that minimizing the total area was the best choice for optimizing search (range) queries.
+Thus, on a node split, for example, the ``optimal algorithm'' considers all possible partitions of the leaves, and chooses that which minimizes the \emph{sum} of the area of the two new leaves.
+In their R* paper \cite{beckmannkriegelschneiderseeger90} Beckmann et. al. credit a large part of their success to how the R* tree instead tries to minimize \emph{overlap}.
+There it is defined as the total area of the pairwise intersections of constituent rectangles.
+They also note that determining the best function to minimize---area versus overlap---could not be realistically determined analytically, so they turned to experimental methods.
+The R+ tree \cite{sellisroussopoulosfaloutsos87} approached the idea of reducing overlap from another direction, and modified the R tree such that \emph{none} of the inner MBRs overlapped.
+If an input rectangle stretched across multiple nodes $N_1,N_2$, then both nodes would point to that rectangle, but $N_1\cap N_2=\emptyset$.
+While largely superseded by the R* tree, the R+ variant joins it as regular ``baseline'' tree against which new developments are compared.
+
+These algorithms have tried to make the R-tree grow more intelligently as insertions happen.
+We repeat a key fact stated in \cite{beckmannkriegelschneiderseeger90}: R-tree performance is very much dependent on the order of insertions.
+Whereas a B-tree's leaves always end up in the same order regardless of the permutation under which they were inserted, the leaves of an R-tree can be in wildly different locations.
+From this observation \cite{beckmannkriegelschneiderseeger90} introduced the notion of forced-reinsertion.
+If a node is about to split, they first see if its constituents can be re-inserted at the same level.
+This both saves a split and works to overcome the bias the tree may have from its first insertions.
+This idea is extended in \cite{schrekchen00} via \emph{branch grafting}.
+Unfortunately, in modern highly-parallel databases reorganizing a tree is often too difficult, and does bad things to the buffer \cite{beckmannseeger09}.
+
+We have seen some techniques to keep the tree well-formed during dynamic insertions.
+A natural question follows: what if the insertions were not so dynamic?
+The notion of bulk-loading comes in here.\cite{argehinrichsvahrenholdvitter99}
+\cite{garcialopezleutenegger98}.
+\cite{biveinissaltenisjensen07}.
+
+Let us extend the idea of less-dynamic insertions to its logical conclusion: completely static data.
+This is quite common is spatial databases: the 1950s census is unlikely to change.
+
+We add the brief note that minimizing overlap usually leads to minimizing area of the relevant MBRs.
+Something about locality of reference.
+
+We have discussed improving R-tree shape mainly under the guiding intuition that reducing \emph{overlap} is our goal.
+But what does that actually mean?
+One suggestion is as follows.
+The notion of minimizing overlap was formalized as minimizing the \emph{stabbing number} \cite{berggudmundssonhammarovermars00}.
+The stabbing number of a set of shapes $\mathcal S$ is the maximum number of shapes in $\mathcal S$ intersecting a point.
+Intuitively, that point ``stabs'' the most number of shapes possible.
+This lead to the first nontrivial upper-bounds on R tree operations, albeit in a static---no inserting or deleting elements---setting.
+Stabbing numbers have become a subject in their own right, and continue to be motivated by R trees and other spatial structures with (potentially) overlapping rectangles.
+It was just recently shown that computing the partition of $\mathcal S$ into $r$ parts in a way such that the partitions' MBRs have minimal stabbing number is $\NP$-hard \cite{bergkhosraviverdonschotweele11}.
+This is somewhat ameliorated by their demonstrating that there is an algorithm for computing the partition exponential in $r$, which quickly becomes small in R trees.
+However, even their approximation algorithms are not yet computed competively quickly.
+[Mention: Research continues on this topic \cite{durochermehrabi12}, others? From a graphics/geometry perspective.]
+
+
+\paragraph{Imposing an Ordering}
+Much of the work in reducing overlap between MBRs is done with the hope---not the surety---of improving performance.
+Understand that much of the complexity of R trees really follows from the fact that spatial data does not have a strict ordering.
+If it did, we could suddenly bring to bear the work from B trees, and apply our more ready intuition in working with strictly ordered data.
+From this motivation sprung the Hilbert R tree \cite{kamelfaloutsos94}.
+Given a fixed space (say, $[0,1]^2$), a Hilbert curve \cite{hilbert91} is a single path which explores the whole space.
+In the discrete space $[0,10]^2$, one may conceive of a left-to-right, bottom-to-top walk which first visits $(0,0)$, then $(0,1)$, then \ldots, then $(10,9)$ and $(10,10)$.
+So we may characterize a value by when it appears on a walk---this imposes a strict ordering on arbitrary points in 2d space!
+The Hilbert R tree uses a Hilbert curve for its walk, and extends it to (approximation of) real points on $\mathbb R^2$.
+Each inner node $N$ stores both its MBR as normal, but also its maximum Hilbert value: literally the furthest point on the Hilbert curve any child of $N$ touches.
+This is akin to a B tree node storing its maximum key value.
+Lookup on a Hilbert tree behaves exactly as if it were an R tree, but insertion, deletion, node-splitting, and node-merging behave exactly as if it were a B tree, the leaves strictly ordered by their position on the Hilbert tree.
+This was the new optimal design in its introduction, beating even the R* tree in its initial experiments.
+However, the Hilbert tree has a fixed curve---the curve cannot grow without essentially rebuilding the whole tree---and this limitation is not shared by the ``more'' dynamic R* tree \cite{beckmannseeger09}.
+
+How does this ordering improve performance?
+
+Research in this area is ongoing, in particular determining \emph{which} Hilbert curve to use \cite{haverkortwalderveen11}.
+
+A key advantage implied by the B-tree-like behavior of the Hilbert tree is that node-splitting and merging is capable of being deferred just like in a B-tree.
+This allows it to have much better space utilization \cite{kamelfaloutsos94}.
+This better space utilization itself also improves performance, and harnessing that idea separately from space-filling curves is our third and final perspective.
+
+We have implicitly focused on imposing an ordering to create a well-formed tree, but this idea extends to spatial join as well \cite{jacoxsamet07}.
+
+\paragraph{Keeping the Tree Small}
+How does this help?
+Clustering, and helping locality of reference.
+Also, obvious: saves memory accesses.
+Major paper to cite: \cite{huanglinlin01}.
+See also \cite{zhanglucheng06}.
+
+How is keeping tree small done?
+By reducing overlap---this topic plays in well with the previous.
+Deferring node-splitting.
+Hilbert trees can scale just like B-trees.
+
 Is there a quintessential bulk loading-in-dynamic trees or lazy paper?
 Perhaps this covers both, to start with: \cite{argehinrichsvahrenholdvitter99}.
 This introduces the LUR, the lazy update R-tree \cite{kwonleelee02}.
 
-\paragraph{Avoiding Overlapping MBRs}
-A fundamental inefficiency with the R-tree---especially for range queries---is that we must sometimes guess which subtree on which to recurse, thereby often computing ``dead-ends''.
-This guessing occurs when our query overlaps the MBR of our R-tree.
-This is unavoidable, but the likelihood of this query overlap is minimized when the overlap among our MBRs is minimized.
-This motivates the definition of the \emph{stabbing number} \cite{berggudmundssonhammarovermars00}.
-Consider the MBRs of a single layer of the R-tree (the leaves constitute a layer).
-The stabbing number is the maximum number of rectangles containing a single point---querying that point ``stabs'' the greatest number of rectangles possible.
-The authors \cite{berggudmundssonhammarovermars00} use this notion to develop some formal lower bounds on R-tree queries.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-Since its conception, substantive work has gone into determining the feasibility of computing optimal partitionings---i.e., MBRs with minimal stabbing number.
-We can formalize our desire as computing a $r$-partition of our $N$ rectangles such that our $r$ new MBRs have \emph{minimal stabbing number}.
-As it turns out, computing such a partition is $\NP$-hard; on the other hand, it is parameterized by $k$, which quickly becomes small as we consider each layer of the R-tree \cite{bergkhosraviverdonschotweele11}.
-The algorithm was ultimately considered too slow, but perhaps future work will make it practical.
-[Other work also exists on this, modern stuff too.]
-
-Prior to this formal approach, the R+ tree \cite{sellisroussopoulosfaloutsos87} was the first to attempt to minimize stabbing number.
-They changed the R-tree's design such that no MBRs on a single, inner layer overlapped with their siblings.
-(Obviously we can only control the inner layers---the leaves may overlap.)
-This design substantively deviates from ``normal'' R-tree implementations in that leaves are replicated, if they are contained in the MBR of multiple inner nodes.
-This facilitates fast \emph{range} queries, but complicates other queries \cite{some paper talks about how it breaks down on perimiter queries or something---gaedegunther?samet?}.
-
-
-\paragraph{Provable Optimality}
-Basically, talk briefly about the optimal R-tree.
-Or maybe this should be a lead-in to the formal discussion.
+% \paragraph{Node Splitting}
+% As a basic R-tree's construction (and hence performance) is somewhat at the mercy of its insertion order, a natural first step to improving R-trees is to take the time to split nodes so that the tree maintains a good structure.
+% When faced with the task of splitting a node in a B-tree, the split is obvious.
+% When splitting an R-tree node, however, we have the freedom and burden to choose among $\binom{M}{m}$ possible partitions of $M$ data points into 2 sets of size $m=\frac{M}{2}$.
+% In conceiving the R-tree Guttman realized the importance of a ``good'' split and proposed three algorithms for it.
+% The initial \cite{guttman84} followed by the heuristic improvement in R* \cite{beckmannkriegelschneiderseeger90} followed by optimal \cite{garcialopezleutenegger98}.
+% This isn't the end-all be-all, as 
+% 
+% More persistent tree improvement (how dose this mesh with ``applying static advancements''?).
+% See \cite{leehsujensencuiteo03} for more tree reorg.
+% 
+% Simplifying splits: have a strict ordering, see \cite{kamelfaloutsos94}.
+% 
+% 
+% \paragraph{Static R-Tree Construction}
+% In our concern for computing a good split as the R-tree recieves new data, we are naturally tempted to imagine the situation where the data is unchanging, static.
+% This is far from contrived: the 1930s US census data is unlikely to change.
+% The paper on bulk loading \cite{garcialopezleutenegger98a}.
+% Index optimization \cite{gavrila94}.
+% Hilbert R-tree \cite{kamelfaloutsos94}.
+% 
+% \paragraph{Optimizing Dynamic Space Usage}
+% In our considering static R-trees, we have seen the utility of dense packing.
+% Intuitively, if the tree is dense, there are fewer nodes (perhaps even fewer layers), and so we have less tree to check.
+% This gives us motivation for improving space usage in dynamic R-trees: not to \%100 of course, but in read-heavy loads B-trees benefit from more density, so it is natural to be curious if we can make the same improvements for R-trees.
+% Improving spatial usage, dense R-trees.
+% The only citation from \cite{thebook} is \cite{huanglinlin01}.
+% I bet more have arrived.
+% Dynamic Hilbert R-tree from \cite{kamelfaloutsos94}, the classic.
+% 
+% \paragraph{Applying Static Advancements to Dynamic R-Trees}
+% Grafting is a cool advance, but seemingly ignored \cite{schrekchen00}.
+% Observe that R* has some satic improvements \cite{beckmannkriegelschneiderseeger90}.
+% Is there a quintessential bulk loading-in-dynamic trees or lazy paper?
+% Perhaps this covers both, to start with: \cite{argehinrichsvahrenholdvitter99}.
+% This introduces the LUR, the lazy update R-tree \cite{kwonleelee02}.
+% 
+% \paragraph{Avoiding Overlapping MBRs}
+% A fundamental inefficiency with the R-tree---especially for range queries---is that we must sometimes guess which subtree on which to recurse, thereby often computing ``dead-ends''.
+% This guessing occurs when our query overlaps the MBR of our R-tree.
+% This is unavoidable, but the likelihood of this query overlap is minimized when the overlap among our MBRs is minimized.
+% This motivates the definition of the \emph{stabbing number} \cite{berggudmundssonhammarovermars00}.
+% Consider the MBRs of a single layer of the R-tree (the leaves constitute a layer).
+% The stabbing number is the maximum number of rectangles containing a single point---querying that point ``stabs'' the greatest number of rectangles possible.
+% The authors \cite{berggudmundssonhammarovermars00} use this notion to develop some formal lower bounds on R-tree queries.
+% 
+% Since its conception, substantive work has gone into determining the feasibility of computing optimal partitionings---i.e., MBRs with minimal stabbing number.
+% We can formalize our desire as computing a $r$-partition of our $N$ rectangles such that our $r$ new MBRs have \emph{minimal stabbing number}.
+% As it turns out, computing such a partition is $\NP$-hard; on the other hand, it is parameterized by $k$, which quickly becomes small as we consider each layer of the R-tree \cite{bergkhosraviverdonschotweele11}.
+% The algorithm was ultimately considered too slow, but perhaps future work will make it practical.
+% [Other work also exists on this, modern stuff too.]
+% 
+% Prior to this formal approach, the R+ tree \cite{sellisroussopoulosfaloutsos87} was the first to attempt to minimize stabbing number.
+% They changed the R-tree's design such that no MBRs on a single, inner layer overlapped with their siblings.
+% (Obviously we can only control the inner layers---the leaves may overlap.)
+% This design substantively deviates from ``normal'' R-tree implementations in that leaves are replicated, if they are contained in the MBR of multiple inner nodes.
+% This facilitates fast \emph{range} queries, but complicates other queries \cite{some paper talks about how it breaks down on perimiter queries or something---gaedegunther?samet?}.
+% 
+% 
+% \paragraph{Provable Optimality}
+% Basically, talk briefly about the optimal R-tree.
+% Or maybe this should be a lead-in to the formal discussion.
