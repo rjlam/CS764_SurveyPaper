@@ -1,8 +1,8 @@
 % Overview 
 To solve the problem of performing efficient searchs on spatial data, 
-Guttman proposed the R-tree, which inspired a plethora of different 
-variations. In Section~\ref{sec:rtrees} we describe the original R-tree, 
-and in Section~\ref{sec:variants} we discuss the $R^{*}$-tree, the variant most 
+Guttman proposed the \rbase-tree, which inspired a plethora of different 
+variations. In Section~\ref{sec:rtrees} we describe the original \rbase-tree, 
+and in Section~\ref{sec:variants} we discuss the \rstar-tree, the variant most 
 commonly used as a baseline for the structures discussed in later sections.
 
 \subsection{R-Trees}
@@ -179,12 +179,12 @@ of the R-tree that this is not the only strategy for deletion.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection{R-Trees In Practice: The $R^{*}$-Tree}
+\subsection{R-Trees In Practice: The \rstar-Tree}
 \label{sec:variants}
 In practice, Guttman's original R-tree is not typically used. Instead the 
-$R^{*}$-tree of \cite{beckmannkriegelschneiderseeger90} is the variant most 
+\rstar-tree of \cite{beckmannkriegelschneiderseeger90} is the variant most 
 commonly used as the baseline structure for R-tree variants. The 
-$R^{*}$-tree introduces four optimization criteria for the data structure. 
+\rstar-tree introduces four optimization criteria for the data structure. 
 These are listed below:
 
 \begin{description}
@@ -218,7 +218,7 @@ These are listed below:
 		\EndFunction
 	\end{algorithmic}
 	\caption{Pseudocode for choosing which leaf to insert entry $E$ into, given a 
-	$R^{*}$-Tree rooted at $R$}
+	\rstar-Tree rooted at $R$}
 	\label{fig:R*-Tree_ChooseLeaf}
 \end{figure}
 
@@ -240,7 +240,7 @@ These are listed below:
 	\EndFunction
 \end{algorithmic}
 \caption{Pseudocode for splitting a full node $N$ given entry $E$ to be inserted into 
-	a $R^{*}$-tree}
+	a \rstar-tree}
 \label{fig:R*-Tree_Split}
 \end{figure}
 
@@ -262,7 +262,7 @@ These are listed below:
 		\State Propagate changes upward
 	\EndFunction
 \end{algorithmic}
-\caption{Pseudocode for inserting entry $E$ into a $R^{*}$-tree rooted at $R$}
+\caption{Pseudocode for inserting entry $E$ into a \rstar-tree rooted at $R$}
 \label{fig:R*-Tree_Insert}
 \end{figure}
 
@@ -293,13 +293,13 @@ the node centroid is largest and reinserting them using $Insert$.
 The modifications on the $Insert$ algorithm have performance and utilization implications. 
 For one, reinsertion causes decrease in overlap and better storage utilization. However,
 its CPU cost is clearly higher than in R-trees, although the reduction of splits helps 
-contain the I/O cost. In \cite{beckmannkriegelschneiderseeger90} we find that $R^{*}$-trees 
+contain the I/O cost. In \cite{beckmannkriegelschneiderseeger90} we find that \rstar-trees 
 outperforms the R-tree in terms of disk accesses and is not sensitive to skewed data distributions. 
 
 % Is this necessary?
 \subsection{Summary}
 In summary, when Guttman introduced the R-tree it quickly became a popular structure
-for spatial queries. Shortly after came the $R^{*}$-tree, which was able to improve query 
+for spatial queries. Shortly after came the \rstar-tree, which was able to improve query 
 performance and utilization of the R-tree by adding different insertion heuristics and 
-optimization criteria. Thus the $R^{*}$-tree is the base structure on which the variants 
+optimization criteria. Thus the \rstar-tree is the base structure on which the variants 
 in Section~\ref{sec:impchal} and Section~\ref{sec:dbchal} try to improve.
