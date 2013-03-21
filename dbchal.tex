@@ -16,30 +16,36 @@ Indeed, the initial cost models for R-trees were index-dependent \cite{.....}.
 Moreover, those models largely assumed \emph{uniformly distributed} input---quite an assumption, especially for spatial data \cite{...}.
 
 Fortunately, our understanding has advanced to the point where index-independent, cost-models are available for non-uniform data.
-They are still parameterized by the spatial query, of course, but we are able to assume an arbitrary ``good'' R-tree.
+They are still parametrized by the spatial query, of course, but we are able to assume an arbitrary ``good'' R-tree.
 One of the first was by Theodoridis et. al. \cite{theodoridissellis96,theodoridisstefanakissellis00}, for \emph{range} and \emph{join} queries.
 Their cost model was only a function of the number of elements in the dataset and the spatial density.
 Their inducing a \emph{density surface}, like a histogram mapping partitions of the space to the local density, was their key advance to extending their cost model beyond uniform input.
 An alternative approach was fractal dimensionality, a concept introduced by \cite{....}.
 It was extended to [stuff] by \cite{...}.
 
-Our previous metrics assumed, or hoped-for, some a prioi knowledge about the data.
+Our previous metrics assumed, or hoped-for, some a priori knowledge about the data.
 Failing that, we could attempt to estimate the properties of the data, which of course implies a means of maintaining that estimation.
- %In practice, of course, one needs to maintain useful meta-data for query optimization \cite{chaudhuri98}, and the histogram is one of the main tools for that \cite{poosalahaasioannidisshekita96}.
- %R-trees can be used \emph{as} spatial histograms \cite{achakeevseeger12}, and serves to estimate a cost of a \emph{range} query.
- %Theis spatial histogram is to partition the data rectangles $r_1,\ldots,r_N$ into buckets, each bucket maintaining the average $x,y$ lengths of its constituents $r_i,\ldots,r_j$ and the bucket's density.
- %Implied by its having a density, the bucket induces an MBR over its rectangles $r_i,\ldots,r_j$.
- %In in their paper \cite{achakeevseeger12}, the authors decide on an equi-depth histogram.
- %This is complicated by the fact that computing their optimal partition is $\NP$-hard \cite{muthukrishnanpoosalasuel99}.
- %There design, guided by the cost-model of \cite{theodoridissellis96}, was thus computed with heuristics; the details are in \cite{achakeevseeger12a}.
+This data is often applied for query optimization \cite{chaudhuri98}, and the histogram is one of the main tools for that \cite{poosalahaasioannidisshekita96}.
+
+[Histograms maintained to improve R-tree performance]
+
+R-trees can be used \emph{as} spatial histograms \cite{achakeevseeger12}, and serves to estimate a cost of a \emph{range} query.
+Their spatial histogram is to partition the data rectangles $r_1,\ldots,r_N$ into buckets, each bucket maintaining the average $x,y$ lengths of its constituents $r_i,\ldots,r_j$ and the bucket's density.
+Implied by its having a density, the bucket induces an MBR over its rectangles $r_i,\ldots,r_j$.
+In in their paper \cite{achakeevseeger12}, the authors decide on an equi-depth histogram.
+This is complicated by the fact that computing their optimal partition is $\NP$-hard \cite{muthukrishnanpoosalasuel99}.
+Their design, guided by the cost-model of \cite{theodoridissellis96}, was thus computed with heuristics; the details are in \cite{achakeevseeger12a}.
  %
- %There also exist histograms for the purpose of estimating, say, a join \cite{aboulnaganaughton00}.
+There also exist histograms for the purpose of estimating, say, a join \cite{aboulnaganaughton00} [other papers exist].
  %Also takes into account other stuff.
  %Some experimental models: \cite{aboulnaganaughton00}, \cite{anyangsivasubramaniam01}, \cite{achakeevseeger12,achakeevseeger12a} has good datasets discussion, see for ``data model''.
 
 \subsection{Optimality in R-tree}
+[Note: arge et. al. have been the leaders in formal analysis here.
 Optimal R-tree \cite{argeberghaverkortyi04}.
 Optimal R-tree, high-level \cite{yi12}.
 Optimizing for minimal stabbing number \cite{bergkhosraviverdonschotweele11}.
 Upper bound on a range query \cite{kanthsingh99}.
 Big discussion: why doesn't this have a formal link to our ``design intuition'' of the previous section?
+Limitations: this is optimality for range, hard to talk about for other queries.
+Bulk-loading required.]
