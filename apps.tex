@@ -64,16 +64,15 @@ load.
  
 \subsection{R-trees in Multiprocessor systems}
 More recent research has focused on multiprocessor systems, especially in 
-lieu of the growing popularity of distributed services. And development of 
-multicpu processors. 
+lieu of the growing popularity of distributed services and multicpu processors.
 The multiprocessor system, unlike the multidisk system, consists of multiple 
 processors. This could be in either a multicore machine in a shared-resource
 environment or a distributed system with many machines in a shared-nothing 
 environment. As before, there is a tradeoff between performance and load 
 balancing; however, in this case scalability, availability, and consistency
 are additional challenges. We examine several R-tree variants that exist in
-this domain and also discuss R-trees in the context of parallel implementation
-issues.
+the shared-nothing domain and also discuss R-trees in the context of parallel 
+implementation issues.
 
 %Shared something R-trees
 \subsubsection{Master R-trees}
@@ -151,15 +150,16 @@ peer knows one or more peers in each block).
 
 Compared to the MC-Rtree of \cite{schnitzer1999master}, the P2PR-tree performs
 very well. \cite{mondal2005p2pr} finds that this decentralized technique 
-dramatically decreases response time in comparison to the MC-Rtree since it does
+dramatically decreases response time since it does
 not require each query to be processed by a master. However, the P2PR-tree can
 still suffer from the effects of skewed data sets since ``hot'' nodes may have
-higher response time if many requests are sent to it.
+higher response time if many requests are sent to it. 
 
 \subsubsection{SD-Rtree}
 % from 2007! cooler!
-The last multiprocessor R-tree variant we discuss is the SD-Rtree of 
-\cite{du2007sd}. This structure is a binary tree residing on a set of servers.
+The last multiprocessor R-tree variant we discuss is the scalable distributed R-tree
+(SD-Rtree) of \cite{du2007sd}. Instead of a B-tree-like structure with a large
+fanout, this structure is a binary tree residing on a set of servers.
 Internal nodes maintain the ID of its parent and links to its two children of 
 the form ($id$, $mbr$, $height$, $type$), where $id$ is the ID of the server 
 storing that child, $height$ is the height of the child subtree, and $type$ 
@@ -172,7 +172,8 @@ the server that most likely has the desired data. On receipt of a query, a
 server first checks its image and then forwards the query to the server it 
 supposes holds the data. If it exists on the target server, then it returns the
 desired data. Otherwise, the server examines the SD-Rtree from bottom up until a 
-node containing the query MBR is found. %Similar to \cite{schniter1999master}, 
+node containing the query MBR is found and sends back a message fixing the 
+out-of-date image. %Similar to \cite{schniter1999master}, 
 %each data node maintains the path from root to the node and uses 
 %this information to forward the query when necessary. This also helps with 
 %load balancing on the upper levels.
@@ -180,28 +181,31 @@ node containing the query MBR is found. %Similar to \cite{schniter1999master},
 Both SD-Rtree and P2PR-tree are able to decentralize query handling and are able
 to scale up well. P2PR-tree has the advantage of having a completely dynamic 
 structure, but it does have additional memory cost due to having an image of the 
-index structure.
+index structure at each server.
 
 % ACID?
 \subsection{Parallel System Implementation Issues}
 With the introduction of additional processes in a database there inherently
 comes the issue of correctness. Operations may contend for the same data 
 structure and without some method of concurrency control we have no guarantees
-on the data in the database. We focus on the topics of query processing, 
-concurrency control, recovery, and data migration. 
+on the data in the database. We focus on the topics of concurrency control, 
+recovery, and data migration. 
 
 \begin{description}
-	\item[Query Processing]
-	\item[Concurrency Control]
-	\item[Recovery]
-	\item[Data Migration]
+	\item[Concurrency Control] R-link tree.
+	\item[Recovery] ARIES and R-trees.
+	\item[Data Migration] How to migrate data.
 \end{description}
 
 \subsection{R-trees in Spatiotemporal Databases}
 There is extensive research for using R-tree variants in spatiotemporal
 databases. Essentially spatiotemporal databases add time as an extra dimension
 in addition to spatial data. This added dimensionality creates new challenges
-[add more to this]. 
+such as deciding whether to split nodes based on spatial data or temporal data. 
+This also adds several new types of queries. \emph{Time slice}
+queries search for all objects intersected by an area at a certain time. 
+\emph{Interval} queries request all objects intersected by an area during a time
+interval.
 
 The R-tree variants used in spatiotemporal databases can be categorized based
 on the time used for indexing data. Structures may index historical 
@@ -209,11 +213,64 @@ spatiotemporal data, current data, or future data. These are described more
 in detail below.
 
 \subsubsection{Indexing Historical Data}
-challenges: growing history
+These \rbase-tree variants index spatiotemporal data for past data. One challenge
+in this domain is that history of an objects grows over time, which means 
+careful consideration of how and what data to store is important. This is 
+typically handled using sampling or updating only when there is a change in the
+data. 
 
+\begin{description}
+	\item[RT-tree] The RT-tree\cite{xu1990rt} uses separate \rbase-tree and 
+	TSB-tree structures. The former is used 
+	to index the spatial aspect of the data and the latter is used to index
+	the temporal data. A TSB-tree is a B-tree that maintains an index on an 
+	entry based on the $oid$ and time. When an object is inserted into the 
+	database, it is placed in the R-tree with an entry of form 
+	($oid$, $mbr$, $t_s$, $t_e$, $p$), where $t_s$ and $t_e$ refer to the 
+	start and end time with which the object corresponds. Spatial queries 
+	are done as in the \rbase-tree case by traveral on the \rbase-tree 
+	structure, meaning search performance on spatial data is the same as in 
+	the \rbase-tree case. Temporal queries are performed on the TSB-tree. 
+	RT-trees use the method of update on change to limit data history.
+	\item[3D R-tree] 3D R-trees \cite{nascimento1999evaluation} are basically
+	R-trees with time as another dimension. However, 3D R-trees cannot 
+	query on data with open intervals. 3D R-trees typically take less
+	memory than an equivalent HR-tree and 2+3R-tree but with worse query 
+	performance than an HR-tree.
+	\item[HR-tree] HR-trees, or historical R-trees, 
+	\cite{nascimento1999evaluation} uses the idea of overlapping trees to 
+	increase the storage utility of the tree. This means that multiple 
+	versions of the R-tree corresponding to different times are stored such 
+	that only the modified nodes with respect to a previous version are 
+	held in later trees. So, supposing there are two times $t1$ and $t2$, the
+	structure for $t2$ will point to nodes that are different from $t1$ and
+	each node of $t2$ will point to either another node in $t2$ or a node in
+	$t1$ (unmodified data). As mentioned before, this tree has better query
+	performance than the RT-tree and 2+3R-tree, but takes more memory.
+	\item[STR-tree] \cite{pfoser2000novel}
+	\item[TB-tree] \cite{pfoser2000novel}
+	\item[MV3R-tree] \cite{tao2001mv3r}
+\end{description}
 
 \subsubsection{Indexing Current Data}
-challenges: most recent copy
+This class of spatiotemporal \rbase-trees index data on the current positions of 
+objects. This poses the issue of how to maintain fresh data and what constitutes 
+as "now" during a query. 
+
+\begin{description}
+	\item[2+3R-tree] A 2+3R-tree\cite{nascimento1999evaluation} uses two 
+	\rbase-trees to index two-dimensional points (current data that only have
+	start times for their intervals) and three dimensional trajectories 
+	(historical data with closed intervals). When the end time of an 
+	interval of an object is added, it first accesses the 2D \rbase-tree
+	and then inserts the object trajectory into the 3D tree and deletes the 
+	object from the 2D \rbase-tree. Queries on current information are 
+	performed on the 2D tree and historical queries are performed on the 3D
+	tree. Depending on the time used on the query, both trees may have to be 
+	accessed.
+	\item[2-3TR-tree] \cite{abdelguerfi20022}
+	\item[LUR-tree] \cite{kwon2002indexing}
+\end{description}
 
 \subsubsection{Indexing Current and Future Positions}
 The main focus of the variants in this section is to keep track of the current
@@ -223,8 +280,14 @@ straight lines.
 
 Challenges:
 
+\begin{description}
+	\item[TPR-tree] \cite{vsaltenis2000indexing}
+	\item[TPR*-tree] \cite{tao2003tpr}
+\end{description}
+
+
 \subsubsection{Database Operations}
-Querying moving data?
+Querying moving data
 Clustering
 
 
