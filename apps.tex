@@ -256,8 +256,8 @@ data.
 	fields to each leaf entry in order to represent object trajectories. 
 	Trajectories are represented by line segments connecting points representing
 	the position of an object at a given time. Thus leaf entries are of the 
-	form ($oid$, $t_id$, $mbr$, $o$) where $t_id$ is the trajectory ID and $o$ 
-	is the orientation of the trajectory in the MBR. Insertions and splits 
+	form ($oid$, $t_{id}$, $mbr$, $o$) where $t_{id}$ is the trajectory ID and 
+	$o$ is the orientation of the trajectory in the MBR. Insertions and splits 
 	consider spatial closeness and trajectory preservation in their operation.
 	This means that they try to preserve good R-tree characteristics (minimum 
 	overlap, minimum dead space, etc) while keeping line segments from the 
