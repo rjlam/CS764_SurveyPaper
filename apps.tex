@@ -68,7 +68,7 @@ lieu of the growing popularity of distributed services. And development of
 multicpu processors. 
 The multiprocessor system, unlike the multidisk system, consists of multiple 
 processors. This could be in either a multicore machine in a shared-resource
-environment or a distributed system with many machines in a share-nothing 
+environment or a distributed system with many machines in a shared-nothing 
 environment. As before, there is a tradeoff between performance and load 
 balancing; however, in this case scalability, availability, and consistency
 are additional challenges. We examine several R-tree variants that exist in
@@ -76,20 +76,111 @@ this domain and also discuss R-trees in the context of parallel implementation
 issues.
 
 %Shared something R-trees
+\subsubsection{Master R-trees}
+The Master R-tree (M-Rtree)\cite{koudas1996declustering} is an R-tree variant 
+for distributed systems.
+In this structure, there are two different types of machines: \emph{master} and 
+\emph{client}. Suppose there is some R-tree $X$ that we wish to represent using 
+the M-Rtree. The master contains a R-tree structure that contains the non-leaf 
+nodes of $X$, and the leaf nodes of $X$ reside in the clients as pages. The leaf 
+level in the master instead has information on which client has the desired page has the form ($siteID$, $pageID$), where $siteID$ refers to the client on which
+the data resides. Note that there is only one master, and it holds the root of 
+the M-Rtree structure.
+Thus a query must contact the master, which searches the portion of the M-Rtree 
+in its memory. All clients in the resultant list (after all relevant master leaf 
+entries have been touched) of relevant $siteID$ and $pageID$ pairs are then sent 
+the query MBR and the $pageID$. Each client then fetches the page, checks for 
+pertinent objects, and sends back the results to the master. 
+
+In this scheme, parallel search processing occurs among the clients, but the 
+master is inherently a source of bottleneck since all operations must be sent to
+it.
+
 %Shared nothing R trees
 \subsubsection{Master-Client R-trees}
-\cite{schnitzer1999master}
+Another variant for the shared-nothing environment is the Master-Client R-tree 
+(MC-Rtree) proposed in \cite{schnitzer1999master},  which is similar to the 
+M-Rtree in the previous section except that instead of having a R-tree index 
+structure residing only in the master, each client also has a subtree. As before,
+the master holds only non-leaf nodes; however, the leaf level entries on the 
+master are of the form ($mbr$, $siteID$). Moreover, the clients each have R-tree
+structures that index the objects assigned to that site. This means that on a 
+query it traverses the tree as usual, and as soon as a master leaf has been 
+touched it stores the client $siteID$ in a list and sends the query MBR to the 
+site, which processes the request. The master then waits for clients to respond
+with any overlapping objects. 
+
+In contrast to the M-Rtree, the MC-Rtree does not wait to send a request to
+clients, and \cite{schnitzer1999master} finds that it has significantly better 
+response time than the M-Rtree due to the reduced network contention and the 
+reduced latency from issuing non-blocking requests to clients as soon as a leaf 
+is reached rather than waiting until the whole tree has been searched. Also 
+there is less time spent in the master tree is smaller since the clients hold 
+more parts of the tree than the M-Rtree. However, this approach is also limited
+by the fact that all requests must go through the master.
 
 %Other trees from before 2005?
-%\subsubsection{}
+
+%dR-tree... see references in p2pr paper.
 
 \subsubsection{P2PR-Tree}
 % From 2005! cool!
-\cite{mondal2005p2pr}
+In \cite{mondal2005p2pr} Mondal, Lifu, and Kitsuregawa examine extending the 
+R-tree structure for use in peer-to-peer (P2P) systems. The challenge in P2P 
+systems is not only the huge number of machines but heterogeneity among them as 
+well. Thus \cite{mondal2005p2pr} proposes the P2PR-tree, which is a 
+decentralized hierarchical tree structure built with scalability and availability
+in mind. 
+
+In the P2P environment, each peer (machine) has a unique \emph{peerID} and holds
+an R-tree covered by a MBR (\emph{peerMBR}). The P2PR-tree is structured
+such that the top two levels (level 0 and level 1) of the index are statically 
+assigned and lower levels are dynamically assigned. Entries in level 0 (the root)
+are called \emph{blocks} and entries in level 1 are called \emph{groups}. Each 
+peer stores a copy of the root node and all nodes in the path from the root to 
+the peerMBR. PeerMBRs that overlap with multiple group MBRs are inserted into 
+both corresponding subtrees. Since the top two levels of the tree are static, 
+this tree is not height-balanced\cite{mondal2005p2pr}.
+
+When a query is issued, it may be handled by any peer. When a peer receives a 
+query, it checks if its peerMBR overlaps with the query MBR. If so it performs 
+a search on its local R-tree structure and completes. Otherwise, it checks the 
+node at the current query level (starts at 0 and gets incremented every time it
+is forwarded) and forwards the query to any peer in each overlapping entry (each
+peer knows one or more peers in each block).
+
+Compared to the MC-Rtree of \cite{schnitzer1999master}, the P2PR-tree performs
+very well. \cite{mondal2005p2pr} finds that this decentralized technique 
+dramatically decreases response time in comparison to the MC-Rtree since it does
+not require each query to be processed by a master. However, the P2PR-tree can
+still suffer from the effects of skewed data sets since ``hot'' nodes may have
+higher response time if many requests are sent to it.
 
 \subsubsection{SD-Rtree}
 % from 2007! cooler!
-\cite{du2007sd}
+The last multiprocessor R-tree variant we discuss is the SD-Rtree of 
+\cite{du2007sd}. This structure is a binary tree residing on a set of servers.
+Internal nodes maintain the ID of its parent and links to its two children of 
+the form ($id$, $mbr$, $height$, $type$), where $id$ is the ID of the server 
+storing that child, $height$ is the height of the child subtree, and $type$ 
+indicates whether the child is a leaf or an internal node. Each leaf node stores 
+the indexed objects, as usual.
+
+\cite{du2007sd} circumvents the problem of congestion in upper level nodes by 
+maintaining an \emph{image} which holds a snapshot of the tree and determines 
+the server that most likely has the desired data. On receipt of a query, a 
+server first checks its image and then forwards the query to the server it 
+supposes holds the data. If it exists on the target server, then it returns the
+desired data. Otherwise, the server examines the SD-Rtree from bottom up until a 
+node containing the query MBR is found. %Similar to \cite{schniter1999master}, 
+%each data node maintains the path from root to the node and uses 
+%this information to forward the query when necessary. This also helps with 
+%load balancing on the upper levels.
+
+Both SD-Rtree and P2PR-tree are able to decentralize query handling and are able
+to scale up well. P2PR-tree has the advantage of having a completely dynamic 
+structure, but it does have additional memory cost due to having an image of the 
+index structure.
 
 % ACID?
 \subsection{Parallel System Implementation Issues}
