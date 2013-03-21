@@ -1,5 +1,5 @@
 % Overview 
-To solve the problem of performing efficient searchs on spatial data, 
+To solve the problem of performing efficient searches on spatial data, 
 Guttman proposed the \rbase-tree, which inspired a plethora of different 
 variations. In Section~\ref{sec:rtrees} we describe the original \rbase-tree, 
 and in Section~\ref{sec:variants} we discuss the \rstar-tree, the variant most 
@@ -13,11 +13,12 @@ during a lookup for spatial data\cite{guttman84}. The data structure that
 resulted from Guttman's research was called the R-tree. R-trees are structured
 similarly to B-trees except, instead of having separation values in each 
 internal node that divide its subtrees, R-tree internal node entries 
-correspond to MBRs that bound its descendents. 
+correspond to MBRs that bound its descendants. 
 Figure~\ref{fig:R-Tree_structure} shows the R-tree representation for the 
 objects of Figure~\ref{fig:R-Tree_objects}. As we observe, the MBR of a 
-particular node entry completely overlaps the MBRs of the entries of its child
-and its child's children. Nodes correspond to disk pages and leaves point to 
+particular node entry exactly contains the MBRs of the entries of its children,
+and by induction all of its descendants.
+Nodes correspond to disk pages and leaves point to 
 database objects.
 
 \begin{figure}[t]
@@ -36,21 +37,22 @@ database objects.
 \end{figure}
 
 
-R-trees are bound by two parameters $m$ and $M$, the minimum and maximum number
-of entries for each node except the root, respectively. An internal node entry 
-is of the form ($mbr$, $p$), where $mbr$ is the MBR containing the MBRs of its 
-descendents and $p$ is the pointer to its child subtree. The $mbr$ entry is of 
+R-trees have two parameters $m$ and $M$, the minimum and maximum number
+of entries for each node except the root. An internal node has between $m$ and $M$ entries
+of the form ($mbr$, $p$), where $mbr$ is the MBR containing the MBRs of its 
+descendants and $p$ is the pointer to its child subtree. The $mbr$ entry is of 
 the form ($I_{0}$, $I_{1}$, ..., $I_{n-1}$), where $n$ is the number of 
 dimensions and $I_{i}$ is of form $[a$,$b]$, a closed bounded interval along 
 the i-th dimension. Similarly, a leaf node entry is of the form ($mbr$, $oid$), 
-where $mbr$ is the MBR containing the object, and oid is the identifier for the 
-object in the database. Finally, the root node must have at least three entries
-except if it is a leaf.
+where $mbr$ is the MBR containing the object, and $oid$ is the identifier for the 
+object in the database. Finally, the root node must have at least two entries
+unless if it is a leaf.
 
 There are multiple operations that are associated with an R-tree, which we 
 discuss in the following sections.
 
 \subsubsection{Search and Update}
+The R-tree was designed to answer range queries: find all data objects that intersect a provided range.
 In order to find all entries overlapped by a bounding rectangle $S$ in the 
 R-tree, the pseudocode of Figure~\ref{fig:R_Tree_Search} is used. In a similar 
 fashion to a B-tree traversal, each node in the tree starting from the root is 
@@ -59,10 +61,17 @@ the search descends into the subtree pointed to by $p$ until it reaches a leaf.
 If the leaf entry's $mbr$ overlaps with $S$, then the object ID $oid$ is 
 returned. Note that there is no worst-case performance guarantee for this
 algorithm.
+In order to answer the query, the R-tree may need only to descend down one path,
+or may need to explore the whole tree, and the R-tree structure greatly influences
+how many nodes need exploring.
 
 Updates are slightly more complex. If a tuple is changed such that the MBR
 covering it is also changed, its record in the R-tree must be deleted and then
-reinserted. This makes the cost of an update relatively expensive.
+reinserted. 
+Changing the ancestor MBRs would be impractical if the spatial data of the tuple
+has completely changed---there's no guarantee that the new spatial data has an relation
+to the old one.
+This makes the cost of an update relatively expensive.
 
 \begin{figure}[t]
 \begin{algorithmic}
@@ -93,35 +102,46 @@ algorithm in Figure~\ref{fig:R_Tree_Insert}. The algorithm traverses the tree
 to find the appropriate node to insert into and performs splits when inserting
 into full nodes, but there is one important distinction: node splitting 
 heuristics. B-tree node splitting is simple since it is only necessary to 
-partition the two resulting nodes into two equally sized nodes. In R-trees, the 
+partition the two resulting nodes into two equally sized nodes.
+As the data has a strict ordering, it is obvious how to partition the data for the split.
+In R-trees, the 
 goal typically is to create two nodes such that it is unlikely for both to be
 examined on subsequent searches by minimizing the total area of the MBRs for
 both nodes.
+Achieving this, however, is conceptually and computationally nontrivial.
 
 In the original R-tree paper, Guttman discusses three different types of node 
 splitting algorithms of different complexities: linear, quadratic, and 
-exponential. The linear split algorithm is the most lightweight, but may
-result in suboptimal splits since it does not perform an exhaustive search on
-all possible groupings. It divides a group of entries into two groups by first 
-selecting two seed entries to be the first entries in each group. The two 
-entries with the highest normalized separation along any dimension are chosen.
-Of the remaining entries, a random one is chosen and placed in the group that 
-would have the least enlargement. The exception is if the number of remaining 
-entries plus the number of entries in one group is equal to $m$, the minimum 
-number of entries in a node, all remaining entries are put into that group. 
+exponential.
+All of these try to partition the children to minimize the sum of the MBR areas of the two resulting nodes.
+The linear split algorithm is the simplest, but may often
+result in suboptimal splits since it does not at all perform an exhaustive search on
+all possible groupings. It partitions the entries into two groups by first 
+selecting two seed entries to be the first entries in each group.
+The two entries with the highest normalized separation along any dimension are chosen.
+This is computed essentially computing a \emph{max} over the distances in each dimension.
+Of the remaining entries, an arbitrary one is chosen and placed in the group that 
+would have the least enlargement, and we repeat.
 
 The quadratic split algorithm is identical to the linear algorithm, except the 
 entries chosen to be seeds are the ones with that have the most wasted space
 if grouped together; in other words, the two entries that have the maximum $d$
 where $d = area(MBR_{i,j}) - area(E_{i}) - area(E_{j}) $.
-Also, the way the remaining entries are added is different than the linear 
-algorithm. In this case, the area increase for both groups is calculated for each
+In order to compute that, we must consider all pairs, hence quadratic.
+The way the remaining entries are added is also quadratic. 
+The area increase for both groups is calculated for each
 entry, and the entry with the maximum difference between the two will be inserted 
 into the group that will result in less enlargement.
+This is $O(n)$ time for $n$ entries each.
 
 The exponential split algorithm is an exhaustive search that enumerates all possible
 groupings for the entries. Given an R-tree with $M$, the maximum number of entries
 in a node, the search space for this algorithm is on the order of $2^{M-1}$.
+
+Note that if at any point during our split algorithm one of the two nodes is so small
+that we need to add all the remaining nodes to ensure it has at least $m$ elements,
+we do so.
+In other words, our splits still always satisfy the desired space-usage.
 
 \begin{figure}[t]
 \begin{algorithmic}
@@ -150,14 +170,17 @@ in a node, the search space for this algorithm is on the order of $2^{M-1}$.
 \end{figure}
 
 \subsubsection{Delete}
-Deletion is handled by the algorithm of Figure~\ref{fig:R_Tree_Delete}. First,
+Deletion is handled by the algorithm in Figure~\ref{fig:R_Tree_Delete}. First,
 we find the leaf containing the entry to be deleted. Then, we handle the case
-where nodes are underfull by calling $CondenseTree$ on the leaf that held
-the entry. Instead of merging the underfull node with a sibling like in a 
+where nodes are under-full by calling $CondenseTree$ on the leaf that held
+the entry. Instead of merging the under-full node with a sibling like in a 
 B-tree, the node is deleted, the other nodes in the leaf are reinserted into 
 the R-tree, and the ancestor MBRs are adjusted accordingly. Guttman argues that
 reinsertion has two advantages; first, it is easier to implement, and second, 
-it prevents deterioration of the R-tree. We will see in other implementations
+it prevents deterioration of the R-tree.
+Again this is conceptually because spatial data does not have a strict ordering---blindly combining sibling nodes
+may result in a very poorly-grown R-tree, whereas in B-trees that is indeed the optimal decision.
+We will see in other implementations
 of the R-tree that this is not the only strategy for deletion.
 
 \begin{figure}[t]
@@ -289,6 +312,7 @@ We see in Figure~\ref{fig:R*-Tree_Insert} that leaf selection and node splitting
 the only aspects that are different from Guttman's R-tree. We see that the insertion 
 algorithm attempts to avoid splits by removing $f$ entries whose centroid distance from 
 the node centroid is largest and reinserting them using $Insert$. 
+Indeed, this forced reinsertion strategy is considered one of the most critical advancements \cite{beckmannseeger09,gaedegunther98,schrekchen00}.
  
 The modifications on the $Insert$ algorithm have performance and utilization implications. 
 For one, reinsertion causes decrease in overlap and better storage utilization. However,
