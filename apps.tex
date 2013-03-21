@@ -4,7 +4,7 @@ scope of our survey of R-trees into the topics of parallel systems,
 spatiotemporal databases, and applications of R-trees.
 
 % Went for a weird title..... can be changed :P
-\subsection{R-trees in the Parallel Universe}
+\subsection{R-trees in a Parallel Setting}
 Before we begin our overview of R-trees in a parallel environment, we first 
 explain some basic definitions. There are three levels of resource sharing in
 a parallel system: shared everything, shared disk, and shared nothing
@@ -23,6 +23,7 @@ multiple disks. The focus then in these types of systems is I/O parallelism
 and how to partition data to maximize performance while maintaining good load
 balance. Below are a few structures that fall under this category.
 
+% reference authors in citations.
 \subsubsection{Independent R-trees}
 The independent R-tree method \cite{kamel1992parallel}\cite{thebook} uses separate R-tree structures for each disk.
 Data is distributed using two approaches: data distribution and space 
@@ -192,7 +193,9 @@ on the data in the database. We focus on the topics of concurrency control,
 recovery, and data migration. 
 
 \begin{description}
-	\item[Concurrency Control] R-link tree.
+	\item[Concurrency Control] R-link tree \cite{kornacker1995high}, 
+	Top down index region modification \cite{ravi1998improved},
+	partial lock coupling \cite{song2004enhanced}
 	\item[Recovery] ARIES and R-trees.
 	\item[Data Migration] How to migrate data.
 \end{description}
@@ -247,8 +250,26 @@ data.
 	each node of $t2$ will point to either another node in $t2$ or a node in
 	$t1$ (unmodified data). As mentioned before, this tree has better query
 	performance than the RT-tree and 2+3R-tree, but takes more memory.
-	\item[STR-tree] \cite{pfoser2000novel}
-	\item[TB-tree] \cite{pfoser2000novel}
+	\item[STR-tree] Pfoser et al. introduce the Spatial Temporal R-tree 
+	(STR-tree) and the TB-tree, which we discuss next\cite{pfoser2000novel}. 
+	The STR-tree extends the R-tree of \cite{guttman84} by adding two additional
+	fields to each leaf entry in order to represent object trajectories. 
+	Trajectories are represented by line segments connecting points representing
+	the position of an object at a given time. Thus leaf entries are of the 
+	form ($oid$, $t_id$, $mbr$, $o$) where $t_id$ is the trajectory ID and $o$ 
+	is the orientation of the trajectory in the MBR. Insertions and splits 
+	consider spatial closeness and trajectory preservation in their operation.
+	This means that they try to preserve good R-tree characteristics (minimum 
+	overlap, minimum dead space, etc) while keeping line segments from the 
+	same trajectory together. However, the performance of STR-trees proves to
+	be worse than the TB-tree except for timeslice queries.
+	\item[TB-tree] The Trajectory-bundle tree (TB-tree) \cite{pfoser2000novel}
+	keeps track of trajectories. The TB-tree data structure is similar to the 
+	basic R-tree, but each leaf node only holds segments for a single 
+	trajectory. This means that spatially close trajectories will be stored in 
+	different leaf nodes meaning the query cost will increase due to more 
+	overlap among internal MBRs. Still, it outperforms the STR-tree, especially
+	for trajectory based queries, and performs comparibly to the R-tree. 
 	\item[MV3R-tree] \cite{tao2001mv3r}
 \end{description}
 
@@ -266,45 +287,110 @@ as "now" during a query.
 	and then inserts the object trajectory into the 3D tree and deletes the 
 	object from the 2D \rbase-tree. Queries on current information are 
 	performed on the 2D tree and historical queries are performed on the 3D
-	tree. Depending on the time used on the query, both trees may have to be 
+	tree. Depending on the time used in the query, both trees may have to be 
 	accessed.
-	\item[2-3TR-tree] \cite{abdelguerfi20022}
-	\item[LUR-tree] \cite{kwon2002indexing}
+	\item[2-3TR-tree] In \cite{abdelguerfi20022} Abdelguerfi et al. extend 
+	the 2+3R-tree and TB-tree with the 2-3 Trajectory R-tree (2-3TR-tree). 
+	Like the 2+3R-tree, the 2-3TR-tree has two R-tree structures. One indexes
+	two-dimensional points with open intervals, and the other indexes 
+	three-dimensional points or lines that represent the history data. 
+	Three-dimensional points refer to an object's position at one time, and 
+	three-dimensional lines refer to an object's position during a time 
+	interval. The addition of supporting three-dimensional points addresses 
+	the issue of dead space in the 2+3R-tree case. A TB-tree lying on top of 
+	the structure is used to index into the 2-3TR-tree and retrieve objects 
+	during trajectory queries. The 2-3TR-tree has a higher I/O cost than the 
+	HR-tree but less pages the 2+3R-tree and 3D R-tree. This is because both
+	trees must be accessed on a query. Abdelguerfi et al. find that the 
+	2-3TR-tree has an additional benefit of having better overlap than the 
+	2+3R-tree and 3D R-tree.
+	\item[LUR-tree] The Lazy Update R-tree (LUR-tree) \cite{kwon2002indexing}
+	is a R-tree that only holds data for the current positions of spatial 
+	objects. The objects are indexed by a list structure mapping each $oid$ 
+	to its leaf node in the R-tree. On an update, the LUR-tree uses this list
+	to find the corresponding object in the leaf and applies the lazy 
+	update strategy. If the
+	object has not moved out of its previous MBR, then the entry is changed
+	and nothing else needs to be done. If it moves out of the old MBR, then 
+	either the object is deleted from the structure and inserted again with 
+	the new data, or if the object has not moved far the old MBR may be 
+	enlarged to enclose the object. The idea of this scheme is to avoid 
+	frequent deletion and insertion, which can be costly if it causes node
+	splits to occur. Compared to the \rstar-tree, updates are of course less
+	costly, but search performance is slightly worse because it has more 
+	overlap among leaves from the lazy updates.
 \end{description}
 
 \subsubsection{Indexing Current and Future Positions}
 The main focus of the variants in this section is to keep track of the current
-and future locations of objects. This is suitable for worksets in which 
+and future locations of objects. This is most suitable for worksets in which 
 objects have predictable behavior such as projectile motion and traveling in
-straight lines.
-
-Challenges:
+straight lines. In order to model objects in this setting, information regarding
+an object's movement must also be stored. The R-tree variants in this category 
+use parametric rectangles to index the data. This means that a MBR contains
+the same objects over all time, but its shape varies. 
 
 \begin{description}
-	\item[TPR-tree] \cite{vsaltenis2000indexing}
-	\item[TPR*-tree] \cite{tao2003tpr}
+	\item[TPR-tree] The Time Parameterized R-tree (TPR-tree) 
+	\cite{vsaltenis2000indexing} is a structure based on the \rstar-tree 
+	except it utilizes \emph{conservative bounding rectangles} (CBRs) 
+	instead of MBRs. CBRs are similar to MBRs, except the lower bounds for 
+	each dimension is the minimum of all enclosed objects with respect to 
+	time and the upper bounds for each dimension is the maximum of all 
+	enclosed objects with respect to time. CBRs never shrink in size, so to 
+	deal with the issue of unbounded growth, all CBRs along on the path 
+	during an insert or delete are recomputed, making these operations costly. 
+	However, the TPR tree structure has much better I/O performance than the 
+	\rstar-tree for time interval queries. 
+	\item[TP\rstar-tree] The TP\rstar-tree \cite{tao2003tpr} has the same 
+	structure as the TPR-tree of \cite{vsaltenis2000indexing}. The difference
+	is that the TP\rstar-tree uses new insertion and deletion algorithms to 
+	minimize the cost for these operations. For all cases the TP\rstar-tree
+	has significantly less I/O cost than the TPR-tree. 
 \end{description}
 
-
-\subsubsection{Database Operations}
-Querying moving data
-Clustering
-
+%\subsubsection{Database Operations}
+%Querying moving data
+%Clustering
 
 \subsection{Applications}
-R-tree variants are used in a vast variety of different applications including
-but not exclusive to spatial datamining, geographic information systems, 
-science and medicine, and cloud computing. We list some examples of R-trees
-and variants used in these fields below.
+So far we have talked about many different types of R-trees, but what are they
+used for? This class of index structures are used in a vast variety of different
+applications including but not exclusive to spatial datamining, geographic 
+information systems, computer aided design, science and medicine, and cloud 
+computing. We list a description of these fields and some R-tree variants used 
+in these fields below.
 
 \begin{description}
-	\item[Spatial datamining]
-	
-	\item[Geographic information systems]
-	\item[Science and medicine]
-	\item[Cloud computing]
+	\item[Spatial datamining] Spatial datamining is the process of finding
+	patterns within spatial datasets. Operations on the underlying R-tree 
+	index structure are used to find patterns and characteristics of the 
+	data. Examples include DBSCAN\cite{ester1996density}, a density-based 
+	clustering algorithm and STRING\cite{wang1997sting}, a grid-based 
+	algorithm. 
+	\item[Geographic information systems (GISs)] Many R-trees are used in 
+	this type of application. GISs are systems that manage and store 
+	geographical data. R-tree structures typically used for GISs are the 
+	\rbase-tree\cite{guttman84} and \rstar-tree\cite{beckmannkriegelschneiderseeger90}.
+	\item[Computer Aided Design (CAD)] CAD applications are used to assist
+	engineers in analysing and creating designs by providing models, 
+	generating drawings, and running simulations. In the layers beneath the
+	application, R-trees are used for storing information about created 
+	objects. Any of the spatial databases previously mentioned can be used 
+	for this application. 
+	\item[Science and medicine] R-trees are also used in science and 
+	medicine for simulations. For instance, Tauheed et al. propose FLAT, an 
+	indexing method built on R-trees for increasing performance in brain 
+	simulations\cite{tauheed2012accelerating}.
+	\item[Cloud computing] R-trees are also used in the cloud setting. Work
+	on how to index spatial data in the cloud has been done by Wang et al. in	 \cite{wang2009retrieving} with their RT-CAN approach that combines the 
+	R-tree with the CAN protocol. Similarly, Zhang et al. combine the R-tree
+	with a KD-tree for a multidimensional index for managing cloud resources 
+	in \cite{zhang2009efficient}.
 \end{description}
 
 R-trees are also available in some form in many popular open source and 
 commercial databases including MySQL Server, SQLite, Oracle$\textsuperscript{\textregistered}$ Spatial, IBM$\textsuperscript{\textregistered}$ DB2, and 
 PostgreSQL. 
+
+
