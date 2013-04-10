@@ -171,7 +171,9 @@ Bulk loading continues to adapt as the world changes \cite{tanluomaoni12}.
 [to expand].
 
 [We add the brief note that minimizing overlap usually leads to minimizing area of the relevant MBRs.
-Something about locality of reference.]
+Something about locality of reference.
+Is there a quintessential bulk loading-in-dynamic trees or lazy paper?
+To start with: \cite{argehinrichsvahrenholdvitter99}.]
 
 \paragraph{Imposing an Ordering}
 Our methods of improving tree-shape follow mainly from intuition and experimental results.
@@ -205,82 +207,23 @@ This better space utilization itself also improves performance, and harnessing t
 [We have implicitly focused on imposing an ordering to create a well-formed tree, but this idea extends to spatial join as well \cite{jacoxsamet07}.]
 
 \paragraph{Keeping the Tree Small}
-[How does this help?
-Clustering, and helping locality of reference.
-Also, obvious: saves memory accesses.
-Major paper to cite: \cite{huanglinlin01}.
-See also \cite{zhanglucheng06}.
-See also many of the packing papers.
+In addition to runtime, one may want to improve storage utilization.
+The first paper to focus on this for R-trees was \cite{huanglinlin01}.
+Even in our storage-rich world, however, there are also time-based benefits for keeping an R-tree compact.
+All other things being equal, an R-tree that manages to have fewer nodes immediately means queries have fewer nodes to check.
+But, even in B-trees, there is a natural tradeoff between having cheap dynamic operations---insert and delete---and the time savings by having a more compact structure \cite{...}.
+In \cite{huanglinlin01} they extend Guttman's tree to Compact R-Trees with the following simple rule: if an entry is being inserted into a node and that node will split, instead put that entry into a \emph{sibling} to our almost-splitting node.
+Their experiments showed that it was competitive time-wise with Guttman's R-tree, but they did not compare it with the \rstar-tree.
+And they achieved almost \%100 space utilization, in contrast to the \%70 of ``normal'' R-trees.
 
-How is keeping tree small done?
-By reducing overlap---this topic plays in well with the previous.
-Deferring node-splitting.
-Hilbert trees can scale just like B-trees.
-Can other trees scale.
-Is there a quintessential bulk loading-in-dynamic trees or lazy paper?
-To start with: \cite{argehinrichsvahrenholdvitter99}.]
+This idea has similarities to the branch grafting of \cite{schrekchen00} mentioned earlier.
+Both branch grafting and Compact R-trees are mentioned in \cite{zhanglucheng06}, which is a recent paper on storage utilization in R-trees and contains a good summary of the history.
+The main result presented there is a ``global'' version of the more local optimizations introduced in \cite{huanglinlin01}.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The main goal of this work is to improve storage usage.
+In doing so, there are also real benefits to the performance of query execution.
+[Does overlap really reduce?
+I swear someone mentioned clustering: maybe in a bulk-loading paper?
+These grafting techniques really work to improve tree shape as well, presenting opportunities to make ``little adjustments'' over the execution.
+Not dissimilary from R*.]
 
-% \paragraph{Node Splitting}
-% As a basic R-tree's construction (and hence performance) is somewhat at the mercy of its insertion order, a natural first step to improving R-trees is to take the time to split nodes so that the tree maintains a good structure.
-% When faced with the task of splitting a node in a B-tree, the split is obvious.
-% When splitting an R-tree node, however, we have the freedom and burden to choose among $\binom{M}{m}$ possible partitions of $M$ data points into 2 sets of size $m=\frac{M}{2}$.
-% In conceiving the R-tree Guttman realized the importance of a ``good'' split and proposed three algorithms for it.
-% The initial \cite{guttman84} followed by the heuristic improvement in R* \cite{beckmannkriegelschneiderseeger90} followed by optimal \cite{garcialopezleutenegger98}.
-% This isn't the end-all be-all, as 
-% 
-% More persistent tree improvement (how dose this mesh with ``applying static advancements''?).
-% See \cite{leehsujensencuiteo03} for more tree reorg.
-% 
-% Simplifying splits: have a strict ordering, see \cite{kamelfaloutsos94}.
-% 
-% 
-% \paragraph{Static R-Tree Construction}
-% In our concern for computing a good split as the R-tree recieves new data, we are naturally tempted to imagine the situation where the data is unchanging, static.
-% This is far from contrived: the 1930s US census data is unlikely to change.
-% The paper on bulk loading \cite{garcialopezleutenegger98a}.
-% Index optimization \cite{gavrila94}.
-% Hilbert R-tree \cite{kamelfaloutsos94}.
-% 
-% \paragraph{Optimizing Dynamic Space Usage}
-% In our considering static R-trees, we have seen the utility of dense packing.
-% Intuitively, if the tree is dense, there are fewer nodes (perhaps even fewer layers), and so we have less tree to check.
-% This gives us motivation for improving space usage in dynamic R-trees: not to \%100 of course, but in read-heavy loads B-trees benefit from more density, so it is natural to be curious if we can make the same improvements for R-trees.
-% Improving spatial usage, dense R-trees.
-% The only citation from \cite{thebook} is \cite{huanglinlin01}.
-% I bet more have arrived.
-% Dynamic Hilbert R-tree from \cite{kamelfaloutsos94}, the classic.
-% 
-% \paragraph{Applying Static Advancements to Dynamic R-Trees}
-% Grafting is a cool advance, but seemingly ignored \cite{schrekchen00}.
-% Observe that R* has some satic improvements \cite{beckmannkriegelschneiderseeger90}.
-% Is there a quintessential bulk loading-in-dynamic trees or lazy paper?
-% Perhaps this covers both, to start with: \cite{argehinrichsvahrenholdvitter99}.
-% This introduces the LUR, the lazy update R-tree \cite{kwonleelee02}.
-% 
-% \paragraph{Avoiding Overlapping MBRs}
-% A fundamental inefficiency with the R-tree---especially for range queries---is that we must sometimes guess which subtree on which to recurse, thereby often computing ``dead-ends''.
-% This guessing occurs when our query overlaps the MBR of our R-tree.
-% This is unavoidable, but the likelihood of this query overlap is minimized when the overlap among our MBRs is minimized.
-% This motivates the definition of the \emph{stabbing number} \cite{berggudmundssonhammarovermars00}.
-% Consider the MBRs of a single layer of the R-tree (the leaves constitute a layer).
-% The stabbing number is the maximum number of rectangles containing a single point---querying that point ``stabs'' the greatest number of rectangles possible.
-% The authors \cite{berggudmundssonhammarovermars00} use this notion to develop some formal lower bounds on R-tree queries.
-% 
-% Since its conception, substantive work has gone into determining the feasibility of computing optimal partitionings---i.e., MBRs with minimal stabbing number.
-% We can formalize our desire as computing a $r$-partition of our $N$ rectangles such that our $r$ new MBRs have \emph{minimal stabbing number}.
-% As it turns out, computing such a partition is $\NP$-hard; on the other hand, it is parameterized by $k$, which quickly becomes small as we consider each layer of the R-tree \cite{bergkhosraviverdonschotweele11}.
-% The algorithm was ultimately considered too slow, but perhaps future work will make it practical.
-% [Other work also exists on this, modern stuff too.]
-% 
-% Prior to this formal approach, the R+ tree \cite{sellisroussopoulosfaloutsos87} was the first to attempt to minimize stabbing number.
-% They changed the R-tree's design such that no MBRs on a single, inner layer overlapped with their siblings.
-% (Obviously we can only control the inner layers---the leaves may overlap.)
-% This design substantively deviates from ``normal'' R-tree implementations in that leaves are replicated, if they are contained in the MBR of multiple inner nodes.
-% This facilitates fast \emph{range} queries, but complicates other queries \cite{some paper talks about how it breaks down on perimiter queries or something---gaedegunther?samet?}.
-% 
-% 
-% \paragraph{Provable Optimality}
-% Basically, talk briefly about the optimal R-tree.
-% Or maybe this should be a lead-in to the formal discussion.
