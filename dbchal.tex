@@ -40,12 +40,40 @@ There also exist histograms for the purpose of estimating, say, a join \cite{abo
  %Also takes into account other stuff.
  %Some experimental models: \cite{aboulnaganaughton00}, \cite{anyangsivasubramaniam01}, \cite{achakeevseeger12,achakeevseeger12a} has good datasets discussion, see for ``data model''.
 
-\subsection{Optimality in R-tree}
-[Note: arge et. al. have been the leaders in formal analysis here.
-Optimal R-tree \cite{argeberghaverkortyi04}.
-Optimal R-tree, high-level \cite{yi12}.
-Optimizing for minimal stabbing number \cite{bergkhosraviverdonschotweele11}.
-Upper bound on a range query \cite{kanthsingh99}.
-Big discussion: why doesn't this have a formal link to our ``design intuition'' of the previous section?
-Limitations: this is optimality for range, hard to talk about for other queries.
-Bulk-loading required.]
+\subsection{Optimality R-tree}
+It is important to mention that there exists an \emph{optimal} R-tree \cite{argeberghaverkortyi04}, called the PR-tree (Priority R-tree).
+For our purposes, we have three core points of discussion about this structure.
+1) What does it mean to be an optimal R-tree?
+2) How does its behavior reflect the techniques and ideas from section~\ref{sec:impchal}?
+3) What can this tell us about future development of R-trees?
+We discuss each point in turn.
+Points 1) and 3) are especially well-discussed in \cite{yi12}, which is a thorough summary of the results of the main paper, \cite{argeberghaverkortyi04}, and we direct the interested reader there.
+
+The optimal R-tree is only built on static data, and answers range queries in optimal time.
+(Note though that the PR-tree does have a fast insert---but it's not promised to maintain optimality---and a slow insert which maintains its optimality \cite{argeberghaverkortyi04}.)
+From previous work \cite{kanthsing99} it was known that a range query had a necessarily high upper bound in terms of node-accesses.
+Formally, we have the [theorem].
+Thus, if a structure could match that upper bound, that structure is optimal.
+The optimal R-tree effectively matches that bound with a time [time] \cite{yi12}.
+The extra $T/B$ term is obviously optimal cost for outputting the results, so the slight difference between [term1,term2] is inconsequential.
+It is also important to note this does \emph{not} reflect a universal lower bound for range queries: there are objects other than R-trees [see yi12 citation 3].
+Practically speaking, the optimal R-tree is competitive with its heuristic counterparts---moreover, it obviously does not perform poorly on any dataset.
+In contrast, one can construct bad datasets for \rstar-trees and Hilbert R-trees.
+
+Curiously, the behavior of this R-tree does not reflect our heuristic intuitions from section~\ref{sec:impchal}.
+A nice description of the Priority R-tree's design can be found in \cite{thebook}, but we provide a brief one here as well.
+The construction builds from prior results showing that it is possible to build an optimal-range-query \emph{KD-tree} \cite{agarwalberggudmundssonhammarhaverkort01}.
+A KD-tree \cite{bentley75}, of which there are many varieties \cite{gaedegunther98}, is a structure similar to R-trees in that a node represents a small part of the total space, and the node's children represent a further refinement of that space.
+It is for this general category of structures the range upper bound was determined.
+Thus, the general strategy for the PR-tree can be loosely understood as a reduction to and from this KD-tree.
+This is not to suggest the construction is trivial! Rather, it is to show the surprising fact that this does explicitly, nor seem to implicitly, use the heuristics developed for R-trees.
+
+Does this PR-tree tell us anything about the future of R-trees?
+It would be interesting to see if we can reconcile its optimality with our design intuitions.
+The summary by Yi \cite{yi12} lists some immediate questions PR-trees: can it be extended with a fast, optimality-maintaining insert, thereby making it dynamic?
+Does there exist an R-tree optimal for other queries (particularly nearest-neighbor)?
+Lastly, the upper-bound theorem fails in the degenerate case when the query is a point---there we return to the notion of stabbing number.
+There is a recent advance related to that last front: recall \cite{bergkhosraviverdonschotweele11} saying that computing the minimal stabbing-point MBR set covering a set of points is $\NP$-hard.
+
+For general R-trees, it is intriguing that optimality in a setting was obtained by appealing to a different, but related, data structure.
+Perhaps more of these sort of reductions can lead to further results.
