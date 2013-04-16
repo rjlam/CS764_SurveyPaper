@@ -11,21 +11,23 @@ a parallel system: shared everything, shared disk, and shared nothing
 \cite{thebook}. Shared everything means that all processors share all 
 resources including disk and memory. Shared disk means that each processor 
 has its own private memory but share disks. Unsurprisingly, shared nothing 
-architectures have private memory and disk for each processor, which
-communicate using some type of network. Thus the basic challenge for R-tree 
+architectures each processor has its own private memory and disk and 
+communicates to another processor using some type of network. 
+Thus the basic challenge for R-tree 
 implementation in such systems boils down to exploiting parallelism to 
 increase both CPU and I/O performance. In the following sections we discuss
 R-trees in multidisk, single-cpu systems and in multiprocessor systems.
 
-\subsection{R-trees in Multidisk Systems}
+\subsubsection{R-trees in Multidisk Systems}
 The architecture of a multidisk system consists of a single processor and 
 multiple disks. The focus then in these types of systems is I/O parallelism
 and how to partition data to maximize performance while maintaining good load
 balance. Below are a few structures that fall under this category.
 
 % reference authors in citations.
-\subsubsection{Independent R-trees}
-The independent R-tree method \cite{kamel1992parallel}\cite{thebook} uses separate R-tree structures for each disk.
+\paragraph{Independent R-trees}
+The independent R-tree method \cite{kamel1992parallel, thebook} uses separate 
+R-tree structures for each disk.
 Data is distributed using two approaches: data distribution and space 
 partitioning. The former uses hashing or round-robin (RR) to assign disks to
 R-tree entries. The second partitions the R-tree into sections such that 
@@ -33,17 +35,18 @@ child nodes reside on the same disk as their parents. The first approach
 has good data load distribution but poor locality, whereas the second approach
 has good locality but could have worse throughput on large queries.
 
-\subsubsection{Super-node R-tree}
-In the super-node method \cite{kamel1992parallel}\cite{thebook} there is only
+\paragraph{Super-node R-tree}
+In the super-node method \cite{kamel1992parallel,thebook} there is only
 one R-tree structure for the system. Each node in the structure consists of
 \emph{d} pages distributed across \emph{d} disks. When node is accessed, each
 page of the node (one page per disk) is read in parallel. This has the 
 advantage of good load balancing, but it has the disadvantage of
 always touching every disk regardless of the query.
 
-\subsubsection{Multiplexed R-tree}
-\cite{kamel1992parallel} tackles the problem of data partitioning with the 
-multiplexed R-tree (MX R-tree), which is essentially the same as the R-tree 
+\paragraph{Multiplexed R-tree}
+Kamel and Faloutsos tackle the problem of data partitioning with the 
+multiplexed R-tree (MX R-tree)\cite{kamel1992parallel}, which is 
+essentially the same as the R-tree 
 in \cite{guttman84} but distributes the nodes across different disks. 
 The root node always resides in main memory, and all other nodes reside on 
 disk. Cross-disk pointers are used to refer to child nodes residing in 
@@ -57,13 +60,14 @@ maximize throughput. \cite{kamel1992parallel} examines several placement
 heuristics but determines that proximity index (PI) has the best performance. 
 The proximity index is essentially a measure of the probability that two MBRs
 will be retrieved by the same query. Thus in the PI scheme nodes are assigned 
-to disk with the proximity index with data balance as the tiebreaker criteria.
+to disk with the smallest proximity index, and on a tie the disk with better 
+data balance is chosen.
 
 \cite{kamel1992parallel} determines that the MX R-tree is outperforms the two
 other methods of node-to-disk distribution both in terms of query latency and
 load.
  
-\subsection{R-trees in Multiprocessor systems}
+\subsubsection{R-trees in Multiprocessor systems}
 More recent research has focused on multiprocessor systems, especially in 
 lieu of the growing popularity of distributed services and multicpu processors.
 The multiprocessor system, unlike the multidisk system, consists of multiple 
@@ -76,9 +80,9 @@ the shared-nothing domain and also discuss R-trees in the context of parallel
 implementation issues.
 
 %Shared something R-trees
-\subsubsection{Master R-trees}
-The Master R-tree (M-Rtree)\cite{koudas1996declustering} is an R-tree variant 
-for distributed systems.
+\paragraph{Master R-trees}
+In \cite{koudas1996declustering}, Koudas et al. describe the  Master R-tree 
+(M-Rtree), which is an R-tree variant for distributed systems.
 In this structure, there are two different types of machines: \emph{master} and 
 \emph{client}. Suppose there is some R-tree $X$ that we wish to represent using 
 the M-Rtree. The master contains a R-tree structure that contains the non-leaf 
@@ -97,10 +101,10 @@ master is inherently a source of bottleneck since all operations must be sent to
 it.
 
 %Shared nothing R trees
-\subsubsection{Master-Client R-trees}
+\paragraph{Master-Client R-trees}
 Another variant for the shared-nothing environment is the Master-Client R-tree 
-(MC-Rtree) proposed in \cite{schnitzer1999master},  which is similar to the 
-M-Rtree in the previous section except that instead of having a R-tree index 
+(MC-Rtree) proposed in \cite{schnitzer1999master} by Schnitzer and Leutenegger,  which is similar to the 
+M-Rtree in the previous section. However, instead of having a R-tree index 
 structure residing only in the master, each client also has a subtree. As before,
 the master holds only non-leaf nodes; however, the leaf level entries on the 
 master are of the form ($mbr$, $siteID$). Moreover, the clients each have R-tree
@@ -114,16 +118,15 @@ In contrast to the M-Rtree, the MC-Rtree does not wait to send a request to
 clients, and \cite{schnitzer1999master} finds that it has significantly better 
 response time than the M-Rtree due to the reduced network contention and the 
 reduced latency from issuing non-blocking requests to clients as soon as a leaf 
-is reached rather than waiting until the whole tree has been searched. Also 
-there is less time spent in the master tree is smaller since the clients hold 
-more parts of the tree than the M-Rtree. However, this approach is also limited
-by the fact that all requests must go through the master.
+is reached, rather than waiting until the whole tree has been searched. Also 
+there is less time spent in the master since its tree is smaller. However, this 
+approach is also limited by the fact that all requests must go through the master.
 
 %Other trees from before 2005?
 
 %dR-tree... see references in p2pr paper.
 
-\subsubsection{P2PR-Tree}
+\paragraph{P2PR-Tree}
 % From 2005! cool!
 In \cite{mondal2005p2pr} Mondal, Lifu, and Kitsuregawa examine extending the 
 R-tree structure for use in peer-to-peer (P2P) systems. The challenge in P2P 
@@ -156,10 +159,11 @@ not require each query to be processed by a master. However, the P2PR-tree can
 still suffer from the effects of skewed data sets since ``hot'' nodes may have
 higher response time if many requests are sent to it. 
 
-\subsubsection{SD-Rtree}
+\paragraph{SD-Rtree}
 % from 2007! cooler!
-The last multiprocessor R-tree variant we discuss is the scalable distributed R-tree
-(SD-Rtree) of \cite{du2007sd}. Instead of a B-tree-like structure with a large
+The last multiprocessor R-tree variant we discuss is the scalable distributed 
+R-tree (SD-Rtree) designed by du Mouza, Litwin, and Rigaux \cite{du2007sd}. 
+Instead of a B-tree-like structure with a large
 fanout, this structure is a binary tree residing on a set of servers.
 Internal nodes maintain the ID of its parent and links to its two children of 
 the form ($id$, $mbr$, $height$, $type$), where $id$ is the ID of the server 
@@ -167,7 +171,8 @@ storing that child, $height$ is the height of the child subtree, and $type$
 indicates whether the child is a leaf or an internal node. Each leaf node stores 
 the indexed objects, as usual.
 
-\cite{du2007sd} circumvents the problem of congestion in upper level nodes by 
+Du Mouza et al. \cite{du2007sd} circumvent the problem of congestion in 
+upper level nodes by 
 maintaining an \emph{image} which holds a snapshot of the tree and determines 
 the server that most likely has the desired data. On receipt of a query, a 
 server first checks its image and then forwards the query to the server it 
@@ -180,25 +185,43 @@ out-of-date image. %Similar to \cite{schniter1999master},
 %load balancing on the upper levels.
 
 Both SD-Rtree and P2PR-tree are able to decentralize query handling and are able
-to scale up well. P2PR-tree has the advantage of having a completely dynamic 
+to scale up well. SD-Rtree has the advantage of having a completely dynamic 
 structure, but it does have additional memory cost due to having an image of the 
-index structure at each server.
+index structure at each server and performance can degrade if the images are 
+obsolete.
 
 % ACID?
-\subsection{Parallel System Implementation Issues}
+\subsubsection{Parallel System Implementation Issues}
 With the introduction of additional processes in a database there inherently
 comes the issue of correctness. Operations may contend for the same data 
 structure and without some method of concurrency control we have no guarantees
 on the data in the database. We focus on the topics of concurrency control, 
 recovery, and data migration. 
 
-\begin{description}
-	\item[Concurrency Control] R-link tree \cite{kornacker1995high}, 
-	Top down index region modification \cite{ravi1998improved},
-	partial lock coupling \cite{song2004enhanced}
-	\item[Recovery] ARIES and R-trees.
-	\item[Data Migration] How to migrate data.
-\end{description}
+\paragraph{Concurrency Control} 
+There are several methods in which to modify R-trees in parallel. Kornacker
+and Banks solve the problem of resolving concurrent operations on an R-tree
+with the R-link tree \cite{kornacker1995high}, a variant inspired by Lehman
+and Yao's work on the B-link tree \cite{lehman1981efficient}. The R-link tree
+extends the R-tree by adding monotonically increasing logical sequence 
+numbers (LSNs) to each node and chaining all nodes at the same level using 
+right sibling pointers. When a node (A) is split, a new node (B) is allocated 
+and some old entries of A are moved to B. Then B's LSN is set to A's old LSN
+and A is assigned a new LSN. The changes are then propagated to the ancestor 
+nodes. Node entries are also augmented with the expected 
+LSN of the child. Thus the LSNs are used to determine if the node has been 
+split; if the LSN of node A is greater than the LSN of the parent's entry
+for node A, then the node has split so process moves to the right sibling up
+until it reaches a node with the expected LSN.
+
+Top down index region modification \cite{ravi1998improved},
+
+partial lock coupling \cite{song2004enhanced}
+	
+\paragraph{Recovery} ARIES and R-trees.
+	
+\paragraph{Data Migration} How to migrate data.
+
 
 \subsection{R-trees in Spatiotemporal Databases}
 There is extensive research for using R-tree variants in spatiotemporal
@@ -222,104 +245,107 @@ careful consideration of how and what data to store is important. This is
 typically handled using sampling or updating only when there is a change in the
 data. 
 
-\begin{description}
-	\item[RT-tree] The RT-tree\cite{xu1990rt} uses separate \rbase-tree and 
-	TSB-tree structures. The former is used 
-	to index the spatial aspect of the data and the latter is used to index
-	the temporal data. A TSB-tree is a B-tree that maintains an index on an 
-	entry based on the $oid$ and time. When an object is inserted into the 
-	database, it is placed in the R-tree with an entry of form 
-	($oid$, $mbr$, $t_s$, $t_e$, $p$), where $t_s$ and $t_e$ refer to the 
-	start and end time with which the object corresponds. Spatial queries 
-	are done as in the \rbase-tree case by traveral on the \rbase-tree 
-	structure, meaning search performance on spatial data is the same as in 
-	the \rbase-tree case. Temporal queries are performed on the TSB-tree. 
-	RT-trees use the method of update on change to limit data history.
-	\item[3D R-tree] 3D R-trees \cite{nascimento1999evaluation} are basically
-	R-trees with time as another dimension. However, 3D R-trees cannot 
-	query on data with open intervals. 3D R-trees typically take less
-	memory than an equivalent HR-tree and 2+3R-tree but with worse query 
-	performance than an HR-tree.
-	\item[HR-tree] HR-trees, or historical R-trees, 
-	\cite{nascimento1999evaluation} uses the idea of overlapping trees to 
-	increase the storage utility of the tree. This means that multiple 
-	versions of the R-tree corresponding to different times are stored such 
-	that only the modified nodes with respect to a previous version are 
-	held in later trees. So, supposing there are two times $t1$ and $t2$, the
-	structure for $t2$ will point to nodes that are different from $t1$ and
-	each node of $t2$ will point to either another node in $t2$ or a node in
-	$t1$ (unmodified data). As mentioned before, this tree has better query
-	performance than the RT-tree and 2+3R-tree, but takes more memory.
-	\item[STR-tree] Pfoser et al. introduce the Spatial Temporal R-tree 
-	(STR-tree) and the TB-tree, which we discuss next\cite{pfoser2000novel}. 
-	The STR-tree extends the R-tree of \cite{guttman84} by adding two additional
-	fields to each leaf entry in order to represent object trajectories. 
-	Trajectories are represented by line segments connecting points representing
-	the position of an object at a given time. Thus leaf entries are of the 
-	form ($oid$, $t_{id}$, $mbr$, $o$) where $t_{id}$ is the trajectory ID and 
-	$o$ is the orientation of the trajectory in the MBR. Insertions and splits 
-	consider spatial closeness and trajectory preservation in their operation.
-	This means that they try to preserve good R-tree characteristics (minimum 
-	overlap, minimum dead space, etc) while keeping line segments from the 
-	same trajectory together. However, the performance of STR-trees proves to
-	be worse than the TB-tree except for timeslice queries.
-	\item[TB-tree] The Trajectory-bundle tree (TB-tree) \cite{pfoser2000novel}
-	keeps track of trajectories. The TB-tree data structure is similar to the 
-	basic R-tree, but each leaf node only holds segments for a single 
-	trajectory. This means that spatially close trajectories will be stored in 
-	different leaf nodes meaning the query cost will increase due to more 
-	overlap among internal MBRs. Still, it outperforms the STR-tree, especially
-	for trajectory based queries, and performs comparibly to the R-tree. 
-	\item[MV3R-tree] \cite{tao2001mv3r}
-\end{description}
+\paragraph{RT-tree} The RT-tree\cite{xu1990rt} uses separate \rbase-tree and 
+TSB-tree structures. The former is used 
+to index the spatial aspect of the data and the latter is used to index
+the temporal data. A TSB-tree is a B-tree that maintains an index on an 
+entry based on the $oid$ and time. When an object is inserted into the 
+database, it is placed in the R-tree with an entry of form 
+($oid$, $mbr$, $t_s$, $t_e$, $p$), where $t_s$ and $t_e$ refer to the 
+start and end time with which the object corresponds. Spatial queries 
+are done as in the \rbase-tree case by traveral on the \rbase-tree 
+structure, meaning search performance on spatial data is the same as in 
+the \rbase-tree case. Temporal queries are performed on the TSB-tree. 
+RT-trees use the method of update on change to limit data history.
+
+\paragraph{3D R-tree} 3D R-trees \cite{nascimento1999evaluation} are basically
+R-trees with time as another dimension. However, 3D R-trees cannot 
+query on data with open intervals. 3D R-trees typically take less
+memory than an equivalent HR-tree and 2+3R-tree but with worse query 
+performance than an HR-tree.
+
+\paragraph{HR-tree} HR-trees, or historical R-trees, 
+\cite{nascimento1999evaluation} uses the idea of overlapping trees to 
+increase the storage utility of the tree. This means that multiple 
+versions of the R-tree corresponding to different times are stored such 
+that only the modified nodes with respect to a previous version are 
+held in later trees. So, supposing there are two times $t1$ and $t2$, the
+structure for $t2$ will point to nodes that are different from $t1$ and
+each node of $t2$ will point to either another node in $t2$ or a node in
+$t1$ (unmodified data). As mentioned before, this tree has better query
+performance than the RT-tree and 2+3R-tree, but takes more memory.
+
+\paragraph{STR-tree} Pfoser et al. introduce the Spatial Temporal R-tree 
+(STR-tree) and the TB-tree, which we discuss next\cite{pfoser2000novel}. 
+The STR-tree extends the R-tree of \cite{guttman84} by adding two additional
+fields to each leaf entry in order to represent object trajectories. 
+Trajectories are represented by line segments connecting points representing
+the position of an object at a given time. Thus leaf entries are of the 
+form ($oid$, $t_{id}$, $mbr$, $o$) where $t_{id}$ is the trajectory ID and 
+$o$ is the orientation of the trajectory in the MBR. Insertions and splits 
+consider spatial closeness and trajectory preservation in their operation.
+This means that they try to preserve good R-tree characteristics (minimum 
+overlap, minimum dead space, etc) while keeping line segments from the 
+same trajectory together. However, the performance of STR-trees proves to
+be worse than the TB-tree except for timeslice queries.
+
+\paragraph{TB-tree} The Trajectory-bundle tree (TB-tree) \cite{pfoser2000novel}
+keeps track of trajectories. The TB-tree data structure is similar to the 
+basic R-tree, but each leaf node only holds segments for a single 
+trajectory. This means that spatially close trajectories will be stored in 
+different leaf nodes meaning the query cost will increase due to more 
+overlap among internal MBRs. Still, it outperforms the STR-tree, especially
+for trajectory based queries, and performs comparibly to the R-tree. 
+
+\paragraph{MV3R-tree} \cite{tao2001mv3r}
 
 \subsubsection{Indexing Current Data}
 This class of spatiotemporal \rbase-trees index data on the current positions of 
 objects. This poses the issue of how to maintain fresh data and what constitutes 
 as "now" during a query. 
 
-\begin{description}
-	\item[2+3R-tree] A 2+3R-tree\cite{nascimento1999evaluation} uses two 
-	\rbase-trees to index two-dimensional points (current data that only have
-	start times for their intervals) and three dimensional trajectories 
-	(historical data with closed intervals). When the end time of an 
-	interval of an object is added, it first accesses the 2D \rbase-tree
-	and then inserts the object trajectory into the 3D tree and deletes the 
-	object from the 2D \rbase-tree. Queries on current information are 
-	performed on the 2D tree and historical queries are performed on the 3D
-	tree. Depending on the time used in the query, both trees may have to be 
-	accessed.
-	\item[2-3TR-tree] In \cite{abdelguerfi20022} Abdelguerfi et al. extend 
-	the 2+3R-tree and TB-tree with the 2-3 Trajectory R-tree (2-3TR-tree). 
-	Like the 2+3R-tree, the 2-3TR-tree has two R-tree structures. One indexes
-	two-dimensional points with open intervals, and the other indexes 
-	three-dimensional points or lines that represent the history data. 
-	Three-dimensional points refer to an object's position at one time, and 
-	three-dimensional lines refer to an object's position during a time 
-	interval. The addition of supporting three-dimensional points addresses 
-	the issue of dead space in the 2+3R-tree case. A TB-tree lying on top of 
-	the structure is used to index into the 2-3TR-tree and retrieve objects 
-	during trajectory queries. The 2-3TR-tree has a higher I/O cost than the 
-	HR-tree but less pages the 2+3R-tree and 3D R-tree. This is because both
-	trees must be accessed on a query. Abdelguerfi et al. find that the 
-	2-3TR-tree has an additional benefit of having better overlap than the 
-	2+3R-tree and 3D R-tree.
-	\item[LUR-tree] The Lazy Update R-tree (LUR-tree) \cite{kwon2002indexing}
-	is a R-tree that only holds data for the current positions of spatial 
-	objects. The objects are indexed by a list structure mapping each $oid$ 
-	to its leaf node in the R-tree. On an update, the LUR-tree uses this list
-	to find the corresponding object in the leaf and applies the lazy 
-	update strategy. If the
-	object has not moved out of its previous MBR, then the entry is changed
-	and nothing else needs to be done. If it moves out of the old MBR, then 
-	either the object is deleted from the structure and inserted again with 
-	the new data, or if the object has not moved far the old MBR may be 
-	enlarged to enclose the object. The idea of this scheme is to avoid 
-	frequent deletion and insertion, which can be costly if it causes node
-	splits to occur. Compared to the \rstar-tree, updates are of course less
-	costly, but search performance is slightly worse because it has more 
-	overlap among leaves from the lazy updates.
-\end{description}
+\paragraph{2+3R-tree} A 2+3R-tree\cite{nascimento1999evaluation} uses two 
+\rbase-trees to index two-dimensional points (current data that only have
+start times for their intervals) and three dimensional trajectories 
+(historical data with closed intervals). When the end time of an 
+interval of an object is added, it first accesses the 2D \rbase-tree
+and then inserts the object trajectory into the 3D tree and deletes the 
+object from the 2D \rbase-tree. Queries on current information are 
+performed on the 2D tree and historical queries are performed on the 3D
+tree. Depending on the time used in the query, both trees may have to be 
+accessed.
+
+\paragraph{2-3TR-tree} In \cite{abdelguerfi20022} Abdelguerfi et al. extend 
+the 2+3R-tree and TB-tree with the 2-3 Trajectory R-tree (2-3TR-tree). 
+Like the 2+3R-tree, the 2-3TR-tree has two R-tree structures. One indexes
+two-dimensional points with open intervals, and the other indexes 
+three-dimensional points or lines that represent the history data. 
+Three-dimensional points refer to an object's position at one time, and 
+three-dimensional lines refer to an object's position during a time 
+interval. The addition of supporting three-dimensional points addresses 
+the issue of dead space in the 2+3R-tree case. A TB-tree lying on top of 
+the structure is used to index into the 2-3TR-tree and retrieve objects 
+during trajectory queries. The 2-3TR-tree has a higher I/O cost than the 
+HR-tree but less pages the 2+3R-tree and 3D R-tree. This is because both
+trees must be accessed on a query. Abdelguerfi et al. find that the 
+2-3TR-tree has an additional benefit of having better overlap than the 
+2+3R-tree and 3D R-tree.
+
+\paragraph{LUR-tree} The Lazy Update R-tree (LUR-tree) \cite{kwon2002indexing}
+is a R-tree that only holds data for the current positions of spatial 
+objects. The objects are indexed by a list structure mapping each $oid$ 
+to its leaf node in the R-tree. On an update, the LUR-tree uses this list
+to find the corresponding object in the leaf and applies the lazy 
+update strategy. If the
+object has not moved out of its previous MBR, then the entry is changed
+and nothing else needs to be done. If it moves out of the old MBR, then 
+either the object is deleted from the structure and inserted again with 
+the new data, or if the object has not moved far the old MBR may be 
+enlarged to enclose the object. The idea of this scheme is to avoid 
+frequent deletion and insertion, which can be costly if it causes node
+splits to occur. Compared to the \rstar-tree, updates are of course less
+costly, but search performance is slightly worse because it has more 
+overlap among leaves from the lazy updates.
 
 \subsubsection{Indexing Current and Future Positions}
 The main focus of the variants in this section is to keep track of the current
@@ -330,24 +356,23 @@ an object's movement must also be stored. The R-tree variants in this category
 use parametric rectangles to index the data. This means that a MBR contains
 the same objects over all time, but its shape varies. 
 
-\begin{description}
-	\item[TPR-tree] The Time Parameterized R-tree (TPR-tree) 
-	\cite{vsaltenis2000indexing} is a structure based on the \rstar-tree 
-	except it utilizes \emph{conservative bounding rectangles} (CBRs) 
-	instead of MBRs. CBRs are similar to MBRs, except the lower bounds for 
-	each dimension is the minimum of all enclosed objects with respect to 
-	time and the upper bounds for each dimension is the maximum of all 
-	enclosed objects with respect to time. CBRs never shrink in size, so to 
-	deal with the issue of unbounded growth, all CBRs along on the path 
-	during an insert or delete are recomputed, making these operations costly. 
-	However, the TPR tree structure has much better I/O performance than the 
-	\rstar-tree for time interval queries. 
-	\item[TP\rstar-tree] The TP\rstar-tree \cite{tao2003tpr} has the same 
-	structure as the TPR-tree of \cite{vsaltenis2000indexing}. The difference
-	is that the TP\rstar-tree uses new insertion and deletion algorithms to 
-	minimize the cost for these operations. For all cases the TP\rstar-tree
-	has significantly less I/O cost than the TPR-tree. 
-\end{description}
+\paragraph{TPR-tree} The Time Parameterized R-tree (TPR-tree) 
+\cite{vsaltenis2000indexing} is a structure based on the \rstar-tree 
+except it utilizes \emph{conservative bounding rectangles} (CBRs) 
+instead of MBRs. CBRs are similar to MBRs, except the lower bounds for 
+each dimension is the minimum of all enclosed objects with respect to 
+time and the upper bounds for each dimension is the maximum of all 
+enclosed objects with respect to time. CBRs never shrink in size, so to 
+deal with the issue of unbounded growth, all CBRs along on the path 
+during an insert or delete are recomputed, making these operations costly. 
+However, the TPR tree structure has much better I/O performance than the 
+\rstar-tree for time interval queries. 
+
+\paragraph{TP\rstar-tree} The TP\rstar-tree \cite{tao2003tpr} has the same 
+structure as the TPR-tree of \cite{vsaltenis2000indexing}. The difference
+is that the TP\rstar-tree uses new insertion and deletion algorithms to 
+minimize the cost for these operations. For all cases the TP\rstar-tree
+has significantly less I/O cost than the TPR-tree. 
 
 %\subsubsection{Database Operations}
 %Querying moving data
