@@ -32,9 +32,10 @@ Thus, many of the previous query types can be reduced to a spatial join \cite{to
 Before examining exemplar queries in-depth, we emphasize that this taxonomy is not a strict partition---would the \emph{nearest surrounder} query \cite{leeleeleong10} be a directional or distance query?
 These are really just to give a sense of what R-trees are used for, not everything they can do.
 
-The five queries we will consider in depth are \emph{range}, \emph{spatial join}, \emph{nearest neighbor}, \emph{convex hull}, and \emph{skyline}.
-The first three are generally accepted as the key queries to consider when thinking about R-trees, and the next two are examples of aggregate spatial queries and directional queries.
+The three queries we will consider in depth are \emph{range}, \emph{spatial join}, and \emph{nearest neighbor}.
+These three are generally accepted as the key queries to consider when thinking about R-trees.
 In examining these queries we will find that, despite their differences, they all suffer the same fundamental bottlenecks, implying general improvements for R-trees are indeed possible.
+We will also briefly mention \emph{aggregate queries}, more complex spatial operations which are built on a foundation of R-trees, but are higher-level than our exemplars.
 
 \paragraph{The Range Query}
 The range query is perhaps the simplest spatial query and remains essentially unchanged since its introduction \cite{guttman84}.
@@ -83,17 +84,28 @@ The heuristic of sorting by MINDIST is not optimal---rather, it is ``optimistic'
 There exist other heuristics as well in the same paper \cite{roussopouloskelleyvincent95}.
 
 The NN query is the basic distance query for other distance queries such as spatial aggregate queries (perimeter, average-area, and so on) \cite{corralalmendros-jimenez07}.
-[Expand this paragraph, lead into the next sub-section.]
+There are more complex variations of NN, such an the \emph{aggregate} NN query.
+There the objective is to find a point $p$ such that its $k$ nearest neighbors (for fixed $k$) have minimial \emph{total} distance.
+Exact optimal is for aggregate nearest neighbors is \cite{papadiastaomouratidishui05}, according to \cite{liliyiyaowang11}.
+In \cite{liliyiyaowang11} NN is further generalized to \emph{flexible aggregate similarity search}, where a more abstract notion of distance and relations can be used.
+In that paper they review much of the history of NN, of which R-trees played an important part.
+They also emphasize one real weakness of R-trees: their performance does fail for large dimensional data ($>6$, in this case).
 
 \paragraph{Aggregate queries}
-Only paper really is \cite{bohmkriegel01}, that's convex hull.
-Exact optimal is for aggregate nearest neighbors is \cite{papadiastaomouratidishui05}, according to \cite{liliyiyaowang11}.
-[This is all interesting because they are non-searching, non-trivial function comptutaions.
-This demonstrates the universality of R-trees as spatial indices.
-There are still X Y Z bottlenecks.]
- 
-\paragraph{Skyline}
-[This is a real-time computation, online or whatever...]
+As a glimpse of what's ``beyond'' NN queries, we briefly mention two more aggregate queries: \emph{convex hull} and then \emph{skyline}.
+There are well-known algorithms for convex hull in a non-database setting \cite{clrs3rd}, but adapting for huge data takes real work.
+Bohm and Kriegel \cite{bohmkriegel01} did so, relying on multidimensional indices (namely, R-trees).
+This has been the foundation of important subroutines, including many of the NN queries mentioned as well as, for instance, \emph{Furthest} Neighbors \cite{yaolikumar09}.
+
+The skyline operator was introduced for databases in \cite{borzsonyikossmanstocker01}.
+Intuitively, it seeks to find all points that are ``undominated'' in a dimension.
+The example in that original paper is to find the best, cheapest hotel: thus the skyline gives us all hotels that are better than all other hotels of greater price, or (equivalently) cheaper than all other hotels of the same or better quality.
+Where all the previous queries have been presented as something like ends in and of themselves, the skyline operator (as the name implies) is assumed to be used in conjunction with other operators.
+A paper soon followed to implement \emph{on-line} skyline computation primarily using the NN query\cite{kossmanramsakrost02}.
+They reasoned that the NN query is best implemented via the \rstar-tree, for their purposes.
+Skyline computation remains an active area of research---\cite{zhangalhajj09} has a more thorough history and state of the art than presented here.
+
+The take-away of discussing these ``extra queries'' is that R-trees seem to be a strong building block for even very complex spatial queries.
 
 \subsection{Optimization Intuition}
 
