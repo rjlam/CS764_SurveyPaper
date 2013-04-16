@@ -1,29 +1,30 @@
 As we have toured the classic enhancements and improvements to R-tree performance, we have encountered experimental data hinting towards when and how R-trees perform well and why.
-In this section we discuss the papers that took that information and worked towards a theory of R-trees.
+In this section we discuss the papers that took that information and develop ways to understand R-tree performance.
 
 \subsection{Cost model}
-We hope to answer a very simple question: given a query, can the R-tree estimate how long that query will take?
-The efficacy of an R-tree query is usually measured by the number of expected page accesses \cite{.....}.
-It is important to note that with spatial data, it is not unusual for computation time, not IO, to be the bottleneck \cite{.....}.
+We hope to answer a very simple question: given a query, can we estimate how long that query will take?
+The efficacy of an R-tree query is usually measured by the number of expected page accesses \cite{tocite}.
+It is important to note that with spatial data, it is not unusual for computation time, not IO, to be the bottleneck \cite{tocite}.
 Indeed, we assume our actual data is simple, perhaps axis-aligned rectangles themselves---otherwise taking into account the geometric complexity of our actual data further complicates things \cite{aboulnaganaughton00}.
+[Add a sentence about CPU cost as a nontrivial factor in cost model.]
 However, IO is the one universal non-trivial source of expense, so we focus on that.
 
 So we hope to estimate how many page accesses an R-tree needs to satisfy a query for a given data set.
-Whereas predicting B-tree performance is relatively straightforward \cite{....}, recall how R-tree performance varies greatly on how ``well'' it is organized.
+Whereas predicting B-tree performance is relatively straightforward \cite{tocite}, recall how R-tree performance varies greatly on how ``well'' it is organized.
 Thus, it seems that predicting a query's cost is not just a function of the dataset, but also the structure of the R-tree built on it.
-Indeed, the initial cost models for R-trees were index-dependent \cite{.....}.
+Indeed, the initial cost models for R-trees were index-dependent \cite{tocite}.
 % \cite{see:list:in:theodoridisstefanakissellis}.
-Moreover, those models largely assumed \emph{uniformly distributed} input---quite an assumption, especially for spatial data \cite{...}.
+Moreover, those models largely assumed \emph{uniformly distributed} input---quite an assumption, especially for spatial data \cite{tocite}.
 
 Fortunately, our understanding has advanced to the point where index-independent, cost-models are available for non-uniform data.
 They are still parametrized by the spatial query, of course, but we are able to assume an arbitrary ``good'' R-tree.
 One of the first was by Theodoridis et. al. \cite{theodoridissellis96,theodoridisstefanakissellis00}, for \emph{range} and \emph{join} queries.
 Their cost model was only a function of the number of elements in the dataset and the spatial density.
-Their inducing a \emph{density surface}, like a histogram mapping partitions of the space to the local density, was their key advance to extending their cost model beyond uniform input.
-An alternative approach was fractal dimensionality, a concept introduced by \cite{....}.
-It was extended to [stuff] by \cite{...}.
+Their inducing a \emph{density surface}, like a histogram mapping partitions of the space to the local density, was the key advance to extending their cost model beyond uniform input.
+An alternative approach was fractal dimensionality, a concept introduced by \cite{tocite}.
+It was extended to [stuff] by \cite{tocite}.
 
-Our previous metrics assumed, or hoped-for, some a priori knowledge about the data.
+Our previous metrics assumed, or hoped for, some a priori knowledge about the data.
 Failing that, we could attempt to estimate the properties of the data, which of course implies a means of maintaining that estimation.
 This data is often applied for query optimization \cite{chaudhuri98}, and the histogram is one of the main tools for that \cite{poosalahaasioannidisshekita96}.
 
