@@ -199,8 +199,55 @@ on the data in the database. We focus on the topics of concurrency control,
 recovery, and data migration. 
 
 \paragraph{Concurrency Control} 
-There are several methods in which to modify R-trees in parallel. Kornacker
-and Banks solve the problem of resolving concurrent operations on an R-tree
+There are several methods with which to access R-trees in parallel. We focus hereon several R-tree variants that support concurrent operations such as the 
+R-simple tree, R-lock tree\cite{ng1993concurrent}, 
+R-couple tree\cite{ng1993concurrent}, and R-link tree\cite{kornacker1995high}. 
+
+\paragraph{R-Simple Tree} Ng and Kameda describe in \cite{ng1993concurrent}
+the simple, naive method for concurrent access to R-trees. In this scheme, only 
+the root of the tree has an associated lock, which may be a share-lock (S-lock) 
+or an exclusive-lock (X-lock). On a search, an S-lock may be acquired by one or 
+multiple processes. On an insert or delete, an X-lock must be acquired by the 
+modifying process. Obviously locking the whole tree is problematic when the 
+necessary granularity of the operation is smaller since all other processes must
+wait for the X-lock to be released.  
+
+\paragraph{R-Lock Tree} Ng and Kameda propose two locking methods, the R-lock
+tree and the R-couple tree, which we describe next, as more efficient variants 
+for concurrent access to an R-tree \cite{ng1993concurrent}. In the R-lock tree
+each node has its own lock. Node level X-locks are acquired for all insert/delete
+operations except on an overflow or underflow. In these cases, the process 
+stores the affected node in a queue to be serviced by the $Maintain$ process.
+$Maintain$ performs splitting and merging of nodes by acquiring an X-lock on the 
+entire tree. To ensure deadlock freedom, locks are acquired top-down and 
+left-to-right. The deferral of splitting and merging means there is some delay
+before the effects of the operation are propagated to the R-tree. The R-lock tree
+has better general performance than the R-simple algorithm since it allows finer 
+granularity locking.
+
+\paragraph{R-Couple Tree} The last method discussed in \cite{ng1993concurrent}
+uses lock-coupling where child nodes are acquired before releasing the current
+node. As before, all nodes have individual locks. The R-couple tree also uses 
+the intention-lock (I-lock) during write operations and adds a parent pointer for
+each node that is updated on overflow or underflow. In this scheme, the search 
+process acquires S-locks on the children that must be visited before releasing 
+the lock on the current node. Only then can the process can descend. On insert, 
+the process acquires I-locks on the chain of nodes that may be affected by the 
+operation as it descends into the R-tree. Any nodes that will have MBR 
+enlargement are put into a list to update in the second phase. During phase two 
+of the insert, the nodes in the list are modified and splits are performed up
+the chain, with upgrades from I-locks to X-locks if necessary. Deletes are 
+performed similarly in two phases. During phase one the process searches for the 
+leaf node to delete from, acquires an X-lock on it, and deletes the corresponding
+entry. During phase two the process propagates the changes up the tree by 
+acquiring locks in a bottom-up fashion. This lack of total ordering on lock 
+acquisition among insert and delete operations implies there is a possibility 
+of deadlock in this scheme. However, compared to the R-lock tree and the 
+R-simple tree, the R-couple tree has the best search latency for several 
+different concurrent workloads. 
+
+\paragraph{R-Link Tree} Kornacker and Banks solve the problem of resolving 
+concurrent operations on an R-tree
 with the R-link tree \cite{kornacker1995high}, a variant inspired by Lehman
 and Yao's work on the B-link tree \cite{lehman1981efficient}. The R-link tree
 extends the R-tree by adding monotonically increasing logical sequence 
@@ -212,11 +259,10 @@ nodes. Node entries are also augmented with the expected
 LSN of the child. Thus the LSNs are used to determine if the node has been 
 split; if the LSN of node A is greater than the LSN of the parent's entry
 for node A, then the node has split so process moves to the right sibling up
-until it reaches a node with the expected LSN.
+until it reaches a node with the expected LSN. 
 
-Top down index region modification \cite{ravi1998improved},
-
-partial lock coupling \cite{song2004enhanced}
+%Top down index region modification \cite{ravi1998improved},
+%partial lock coupling \cite{song2004enhanced}
 	
 \paragraph{Recovery} ARIES and R-trees.
 	
