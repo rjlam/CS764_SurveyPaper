@@ -199,25 +199,53 @@ on the data in the database. We focus on the topics of concurrency control,
 recovery, and data migration. 
 
 \paragraph{Concurrency Control} 
-There are several methods with which to access R-trees in parallel. We focus hereon several R-tree variants that support concurrent operations such as the 
-R-simple tree, R-lock tree\cite{ng1993concurrent}, 
-R-couple tree\cite{ng1993concurrent}, and R-link tree\cite{kornacker1995high}. 
+Before we examine the topic of concurrency control, let us define the three
+different locking modes used in our discussion and their compatibility with
+eachother. As seen in Table~\ref{table:locks} there are Shared (S) locks, 
+Exclusive (X) locks, and Intention (I) locks. Shared locks allow multiple 
+processes to acquire locks on a particular node and are used when the process
+needs to read the data. Exclusive locks allow only one process to acquire it
+and disallows other processes from acquiring any locks on that node. They are 
+used for modification of a node. Intention locks indicate that a process
+may modify the associated node in the future, and will upgrade to an X-lock 
+when it actually performs an update. I-locks allow other processes to acquire
+S-locks on the same node but disallow processes from acquiring I-locks or X-locks.
+
+\begin{table}[hb]
+	\centering{
+	\caption{Table of lock compatibilities}
+	\begin{tabular}{| c c c c |}
+	\hline
+	& S & I & X	\\
+	\hline
+	S& yes & yes & no	\\
+	I& yes & no & no	\\
+	X& no & no & no		\\
+	\hline
+	\end{tabular}
+	\label{table:locks}
+	}
+\end{table}
+	
+We now turn our discussion toward several R-tree variants that support concurrent 
+operations such as the R-simple tree, R-lock tree, R-couple 
+tree\cite{ng1993concurrent}, and R-link tree\cite{kornacker1995high, ng1994r}. 
 
 \paragraph{R-Simple Tree} Ng and Kameda describe in \cite{ng1993concurrent}
 the simple, naive method for concurrent access to R-trees. In this scheme, only 
-the root of the tree has an associated lock, which may be a share-lock (S-lock) 
-or an exclusive-lock (X-lock). On a search, an S-lock may be acquired by one or 
+the root of the tree has an associated lock, which may be an S-lock or X-lock. 
+On a search, an S-lock may be acquired by one or 
 multiple processes. On an insert or delete, an X-lock must be acquired by the 
-modifying process. Obviously locking the whole tree is problematic when the 
-necessary granularity of the operation is smaller since all other processes must
-wait for the X-lock to be released.  
+modifying process. Obviously X-locking the whole tree is problematic when the 
+granularity of the operation is smaller since all other processes must wait 
+unnecessarily for the lock to be released before proceeding. 
 
-\paragraph{R-Lock Tree} Ng and Kameda propose two locking methods, the R-lock
-tree and the R-couple tree, which we describe next, as more efficient variants 
-for concurrent access to an R-tree \cite{ng1993concurrent}. In the R-lock tree
-each node has its own lock. Node level X-locks are acquired for all insert/delete
-operations except on an overflow or underflow. In these cases, the process 
-stores the affected node in a queue to be serviced by the $Maintain$ process.
+\paragraph{R-Lock Tree} Ng and Kameda propose two other locking methods in 
+\cite{ng1993concurrent}, the R-lock tree and the R-couple tree which we describe 
+next, as more efficient variants for concurrent access to an R-tree. In the R-lock 
+tree each node has its own lock. Node level X-locks are acquired for all 
+insert/delete operations except on an overflow or underflow. In these cases, the 
+process stores the affected node in a queue to be serviced by the $Maintain$ process.
 $Maintain$ performs splitting and merging of nodes by acquiring an X-lock on the 
 entire tree. To ensure deadlock freedom, locks are acquired top-down and 
 left-to-right. The deferral of splitting and merging means there is some delay
@@ -228,7 +256,7 @@ granularity locking.
 \paragraph{R-Couple Tree} The last method discussed in \cite{ng1993concurrent}
 uses lock-coupling where child nodes are acquired before releasing the current
 node. As before, all nodes have individual locks. The R-couple tree also uses 
-the intention-lock (I-lock) during write operations and adds a parent pointer for
+the I-lock during update operations and adds a parent pointer for
 each node that is updated on overflow or underflow. In this scheme, the search 
 process acquires S-locks on the children that must be visited before releasing 
 the lock on the current node. Only then can the process can descend. On insert, 
@@ -240,31 +268,60 @@ the chain, with upgrades from I-locks to X-locks if necessary. Deletes are
 performed similarly in two phases. During phase one the process searches for the 
 leaf node to delete from, acquires an X-lock on it, and deletes the corresponding
 entry. During phase two the process propagates the changes up the tree by 
-acquiring locks in a bottom-up fashion. This lack of total ordering on lock 
-acquisition among insert and delete operations implies there is a possibility 
-of deadlock in this scheme. However, compared to the R-lock tree and the 
-R-simple tree, the R-couple tree has the best search latency for several 
-different concurrent workloads. 
+acquiring locks on the parent before releasing a lock on itself. Compared to the 
+R-lock tree and the R-simple tree, the R-couple tree has the best search latency 
+for several different concurrent workloads. 
 
-\paragraph{R-Link Tree} Kornacker and Banks solve the problem of resolving 
-concurrent operations on an R-tree
-with the R-link tree \cite{kornacker1995high}, a variant inspired by Lehman
-and Yao's work on the B-link tree \cite{lehman1981efficient}. The R-link tree
-extends the R-tree by adding monotonically increasing logical sequence 
-numbers (LSNs) to each node and chaining all nodes at the same level using 
-right sibling pointers. When a node (A) is split, a new node (B) is allocated 
-and some old entries of A are moved to B. Then B's LSN is set to A's old LSN
-and A is assigned a new LSN. The changes are then propagated to the ancestor 
-nodes. Node entries are also augmented with the expected 
-LSN of the child. Thus the LSNs are used to determine if the node has been 
-split; if the LSN of node A is greater than the LSN of the parent's entry
-for node A, then the node has split so process moves to the right sibling up
-until it reaches a node with the expected LSN. 
+\paragraph{R-Link Tree} Interestingly, both Ng and Kameda\cite{ng1994r} and 
+Kornacker and Banks\cite{kornacker1995high} publish papers around the same time on 
+an R-tree variant called the R-link tree inspired by Lehman and Yao's work on the 
+B-link tree \cite{lehman1981efficient}. Ng and Kameda's R-link tree\cite{ng1994r} 
+adds a link pointer to each node pointing to its right neighbor on the same level and
+a list of pending updates. Search proceeds as usual by acquiring S-locks, and 
+if the parent data is stale the search moves to the right. This is detected by
+checking if the parent pointer is null. On overflow, changes to node MBRs along 
+the insertion path are recorded in the pending update list to be handled later 
+by any other database operation. Deletion is handled by allowing underfull nodes.
+When a node is empty it is marked for deletion and taken care of by garbage
+collection. No performance analysis is performed in \cite{ng1994r}, although one
+can infer that the decreased storage utilization may cause performance degredation
+and that update latency is increased.
+
+Kornacker and Banks's take on the R-link tree\cite{kornacker1995high} extends 
+the R-tree by adding monotonically increasing logical sequence numbers (LSNs) 
+to each node and chaining all nodes at the same level using right sibling 
+pointers. When a node (A) is split, a new node (B) is allocated and some old 
+entries of A are moved to B. Then B's LSN is set to A's old LSN and A is assigned 
+a new LSN. The changes are then propagated to the ancestor nodes using lock-coupling
+(parent lock acquired before releasing current lock). Node entries are also 
+augmented with the expected LSN of the child. Thus the LSNs are used 
+to determine if the node has been split; if the LSN of node A is greater than 
+the LSN of the parent's entry for node A, then the node has split so process 
+moves to the right sibling until it reaches a node with the expected LSN. 
+Kornacker and Banks's R-tree also allows underfull nodes but deletes nodes as 
+soon as they are empty rather than wait for a periodic garbage collecting process.
 
 %Top down index region modification \cite{ravi1998improved},
 %partial lock coupling \cite{song2004enhanced}
 	
-\paragraph{Recovery} ARIES and R-trees.
+\paragraph{Recovery} To our knowledge there is not much literature that considers
+R-tree recovery. In Kornacker and Banks's paper on the R-link tree 
+\cite{kornacker1995high} the authors discuss a method for recovery in a system 
+utilizing write-ahead logging (WAL) with support for logical undo. They partition the 
+log entry for R-tree updates into two parts: content and structure modification. 
+Content changing entries are logged within the executing transaction. Structure 
+changing entries are treated as separate atomic actions that are not rolled back 
+even if the transaction that caused the change aborts. This is advantageous since
+this allows pages that have been modified in a split to be unlocked once the entry
+has been written to the WAL. However a consequence of this scheme is performance
+degredation from overly large MBRs when the transaction causing MBR enlargment 
+crashes or aborts. Ng and Kameda also briefly talk about recovery for their R-link
+tree scheme in \cite{ng1994r}. They break down each update operation into four parts:
+splitting, inserting an entry into a node, deleting a node, and updating MBRs. Each
+of the parts is an atomic action that is writen to a WAL on completion. Finally, 
+Haapasalo et al. present two methods with diffrent consistency levels for R-tree 
+recovery using ARIES-based recovery \cite{ARIES} in \cite{haapasalo2013recovery}. The
+first method 
 	
 \paragraph{Data Migration} How to migrate data.
 
