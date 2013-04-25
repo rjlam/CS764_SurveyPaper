@@ -46,26 +46,25 @@ always touching every disk regardless of the query.
 \paragraph{Multiplexed R-tree}
 Kamel and Faloutsos tackle the problem of data partitioning with the 
 multiplexed R-tree (MX R-tree)\cite{kamel1992parallel}, which is 
-essentially the same as the R-tree 
-in \cite{guttman84} but distributes the nodes across different disks. 
-The root node always resides in main memory, and all other nodes reside on 
-disk. Cross-disk pointers are used to refer to child nodes residing in 
-different disks. 
+essentially the same as the R-tree in \cite{guttman84} but distributes the 
+nodes across different disks. The root node always resides in main memory, 
+and all other nodes reside on disk. Cross-disk pointers are used to refer 
+to child nodes residing in different disks. 
 
 Disk assignment is performed with the conflicting criteria of
 data balance, where the number of nodes are partitioned equally across disks, 
 area balance, where the total area covered by each disk is approximately 
 equal, and proximity, where close nodes are put on separate disks in order to
-maximize throughput. \cite{kamel1992parallel} examines several placement 
-heuristics but determines that proximity index (PI) has the best performance. 
-The proximity index is essentially a measure of the probability that two MBRs
+maximize throughput. Kamel and Faloutsos examine several placement 
+heuristics but determines that proximity index (PI) has the best performance 
+\cite{kamel1992parallel}. The proximity index is essentially a measure of the 
+probability that two MBRs
 will be retrieved by the same query. Thus in the PI scheme nodes are assigned 
 to disk with the smallest proximity index, and on a tie the disk with better 
 data balance is chosen.
 
-\cite{kamel1992parallel} determines that the MX R-tree is outperforms the two
-other methods of node-to-disk distribution both in terms of query latency and
-load.
+Kamel and Faloutsos determine that the MX R-tree outperforms the two other 
+methods of node-to-disk distribution both in terms of query latency and load.
  
 \subsubsection{R-trees in Multiprocessor systems}
 More recent research has focused on multiprocessor systems, especially in 
@@ -87,7 +86,8 @@ In this structure, there are two different types of machines: \emph{master} and
 \emph{client}. Suppose there is some R-tree $X$ that we wish to represent using 
 the M-Rtree. The master contains a R-tree structure that contains the non-leaf 
 nodes of $X$, and the leaf nodes of $X$ reside in the clients as pages. The leaf 
-level in the master instead has information on which client has the desired page has the form ($siteID$, $pageID$), where $siteID$ refers to the client on which
+level in the master instead has information on which client has the desired page 
+has the form ($siteID$, $pageID$), where $siteID$ refers to the client on which
 the data resides. Note that there is only one master, and it holds the root of 
 the M-Rtree structure.
 Thus a query must contact the master, which searches the portion of the M-Rtree 
@@ -103,7 +103,8 @@ it.
 %Shared nothing R trees
 \paragraph{Master-Client R-trees}
 Another variant for the shared-nothing environment is the Master-Client R-tree 
-(MC-Rtree) proposed in \cite{schnitzer1999master} by Schnitzer and Leutenegger,  which is similar to the 
+(MC-Rtree) proposed in \cite{schnitzer1999master} by Schnitzer and Leutenegger,  
+which is similar to the 
 M-Rtree in the previous section. However, instead of having a R-tree index 
 structure residing only in the master, each client also has a subtree. As before,
 the master holds only non-leaf nodes; however, the leaf level entries on the 
@@ -115,12 +116,13 @@ site, which processes the request. The master then waits for clients to respond
 with any overlapping objects. 
 
 In contrast to the M-Rtree, the MC-Rtree does not wait to send a request to
-clients, and \cite{schnitzer1999master} finds that it has significantly better 
+clients, and Schnitzer and Leutenegger find that it has significantly better 
 response time than the M-Rtree due to the reduced network contention and the 
 reduced latency from issuing non-blocking requests to clients as soon as a leaf 
-is reached, rather than waiting until the whole tree has been searched. Also 
-there is less time spent in the master since its tree is smaller. However, this 
-approach is also limited by the fact that all requests must go through the master.
+is reached, rather than waiting until the whole tree has been searched  
+\cite{schnitzer1999master}. Also there is less time spent in the master since its 
+tree is smaller. However, this approach is also limited by the fact that all 
+requests must go through the master.
 
 %Other trees from before 2005?
 
@@ -153,9 +155,9 @@ is forwarded) and forwards the query to any peer in each overlapping entry (each
 peer knows one or more peers in each block).
 
 Compared to the MC-Rtree of \cite{schnitzer1999master}, the P2PR-tree performs
-very well. \cite{mondal2005p2pr} finds that this decentralized technique 
-dramatically decreases response time since it does
-not require each query to be processed by a master. However, the P2PR-tree can
+very well. Mondal et al. finds that this decentralized technique 
+dramatically decreases response time since it does not require each query to be 
+processed by a master. However, the P2PR-tree can
 still suffer from the effects of skewed data sets since ``hot'' nodes may have
 higher response time if many requests are sent to it. 
 
@@ -201,25 +203,26 @@ recovery, and data migration.
 \paragraph{Concurrency Control} 
 Before we examine the topic of concurrency control, let us define the three
 different locking modes used in our discussion and their compatibility with
-eachother. As seen in Table~\ref{table:locks} there are Shared (S) locks, 
-Exclusive (X) locks, and Intention (I) locks. Shared locks allow multiple 
+eachother. We use the terminology described by Ng and Kameda in 
+\cite{ng1993concurrent}. As seen in Table~\ref{table:locks} there are Shared 
+(S) locks, Exclusive (X) locks, and Warning (W) locks. Shared locks allow multiple 
 processes to acquire locks on a particular node and are used when the process
 needs to read the data. Exclusive locks allow only one process to acquire it
 and disallows other processes from acquiring any locks on that node. They are 
-used for modification of a node. Intention locks indicate that a process
+used for modification of a node. Warning locks indicate that a process
 may modify the associated node in the future, and will upgrade to an X-lock 
-when it actually performs an update. I-locks allow other processes to acquire
-S-locks on the same node but disallow processes from acquiring I-locks or X-locks.
+when it actually performs an update. W-locks allow other processes to acquire
+S-locks on the same node but disallow processes from acquiring W-locks or X-locks.
 
 \begin{table}[hb]
 	\centering{
 	\caption{Table of lock compatibilities}
 	\begin{tabular}{| c c c c |}
 	\hline
-	& S & I & X	\\
+	& S & W & X	\\
 	\hline
 	S& yes & yes & no	\\
-	I& yes & no & no	\\
+	W& yes & no & no	\\
 	X& no & no & no		\\
 	\hline
 	\end{tabular}
@@ -256,15 +259,15 @@ granularity locking.
 \paragraph{R-Couple Tree} The last method discussed in \cite{ng1993concurrent}
 uses lock-coupling where child nodes are acquired before releasing the current
 node. As before, all nodes have individual locks. The R-couple tree also uses 
-the I-lock during update operations and adds a parent pointer for
+the W-lock during update operations and adds a parent pointer for
 each node that is updated on overflow or underflow. In this scheme, the search 
 process acquires S-locks on the children that must be visited before releasing 
 the lock on the current node. Only then can the process can descend. On insert, 
-the process acquires I-locks on the chain of nodes that may be affected by the 
+the process acquires W-locks on the chain of nodes that may be affected by the 
 operation as it descends into the R-tree. Any nodes that will have MBR 
 enlargement are put into a list to update in the second phase. During phase two 
 of the insert, the nodes in the list are modified and splits are performed up
-the chain, with upgrades from I-locks to X-locks if necessary. Deletes are 
+the chain, with upgrades from W-locks to X-locks if necessary. Deletes are 
 performed similarly in two phases. During phase one the process searches for the 
 leaf node to delete from, acquires an X-lock on it, and deletes the corresponding
 entry. During phase two the process propagates the changes up the tree by 
@@ -318,12 +321,33 @@ degredation from overly large MBRs when the transaction causing MBR enlargment
 crashes or aborts. Ng and Kameda also briefly talk about recovery for their R-link
 tree scheme in \cite{ng1994r}. They break down each update operation into four parts:
 splitting, inserting an entry into a node, deleting a node, and updating MBRs. Each
-of the parts is an atomic action that is writen to a WAL on completion. Finally, 
-Haapasalo et al. present two methods with diffrent consistency levels for R-tree 
-recovery using ARIES-based recovery \cite{ARIES} in \cite{haapasalo2013recovery}. The
-first method 
+of the parts is an atomic action that is writen to a WAL on completion. 
+
+Finally, 
+Haapasalo et al. present two methods with different consistency levels for R-tree 
+recovery using ARIES-based recovery \cite{mohan1992aries} in \cite{haapasalo2013recovery}. The
+first method uses a relaxed consistency for MBR modifications where all rectangle
+modifications, page-splits, and page-merges are recorded in the WAL as redo-only. 
+Insertions and deletions that do not modify the tree structure are recorded in 
+normal log records. On undo of an insert, the object is deleted and a compensation
+log record is written if no underflow or MBR shrinkage occurs. Otherwise, the deletion
+path is traversed, and merges and MBR deflation are performed using redo-only log 
+records. Then the deletion is performed on the page holding the object and recorded
+in the log using a compensation log record. The converse occurs for undoing a delete.
+The consequence of this relaxed MBR consistency is that less write latches need to be
+acquired during an update of an R-tree, but it could result in deterioration of the 
+R-tree structure if many rollbacks or aborts are performed. 
+The second method described by Haapasalo
+et al. uses a strictly consistent scheme with a latching method similar to Ng and 
+Kameda's R-couple tree\cite{ng1993concurrent} where a W-lock is acquired for all 
+nodes along the update path and upgraded to X-locks when changes are made. MBR 
+modifications are undoable during the period in which the nodes along the update 
+path are being modified and latched, but once the update has completed, the MBR 
+modifications are made redo-only by setting the UndoNextLSN of the final log record
+to jump over the chain of modifications. Page splits and page merges remain redo-only 
+and thus are performed before any MBR modifications occur. 
 	
-\paragraph{Data Migration} How to migrate data.
+%\paragraph{Data Migration} How to migrate data.
 
 
 \subsection{R-trees in Spatiotemporal Databases}
@@ -400,7 +424,21 @@ different leaf nodes meaning the query cost will increase due to more
 overlap among internal MBRs. Still, it outperforms the STR-tree, especially
 for trajectory based queries, and performs comparibly to the R-tree. 
 
-\paragraph{MV3R-tree} \cite{tao2001mv3r}
+\paragraph{MV3R-tree} In \cite{tao2001mv3r}, Tao and Papadias propose the 
+Multi-version 3D R-tree (MV3R-tree), which combines a Mult-version R-tree (MVR-tree) 
+and the 3D R-tree\cite{nascimento1999evaluation} built atop the MVR-tree leaf nodes.
+MVR-trees have entries with the form ($mbr$, $t_{start}$, $t_{end}$, $pointer$)
+where $t$ indicates the time the record was inserted or deleted. The $pointer$ 
+refers to the subtree that is bounded by $t_{end}$ and $t_{start}$ if it is an
+internal node entry and the actual record if it is a leaf. The 3D R-tree part
+of the structure is built using the leaves of the MVR-tree to use during 
+interval queries. Compared to the HR-tree and 3D R-tree of 
+\cite{nascimento1999evaluation}, the MV3R-tree performs slightly
+worse than the HR-tree on timestamp queries and consistently outperforms the 
+3D R-tree except in a workload that is only interval queries. However, the 
+MV3R-tree uses considerably less space than the HR-tree and outperforms it 
+in terms of interval queries and performs comparably to both the 3D R-tree
+and HR-tree in a mixed interval and timestamp query workload.
 
 \subsubsection{Indexing Current Data}
 This class of spatiotemporal \rbase-trees index data on the current positions of 
