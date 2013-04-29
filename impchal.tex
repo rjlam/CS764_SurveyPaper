@@ -146,7 +146,7 @@ The \rplus-tree \cite{sellisroussopoulosfaloutsos87} approached the idea of redu
 If an input rectangle stretched across multiple nodes $N_1,N_2$, then both nodes would point to that rectangle, but $N_1\cap N_2=\emptyset$.
 A comparison between \rbase-trees and \rplus-trees can be found in \cite{greene89}.
 A term used for the \rplus-tree idea is called \emph{clipping}, which has influenced other spatial data structures as well \cite{gaedegunther98}.
-While largely superseded by the \rstar-tree, the \rplus variant joins it as regular ``baseline'' tree against which new developments are compared \cite{tocite}.
+While largely superseded by the \rstar-tree, the \rplus variant joins it as regular ``baseline'' tree against which new developments are compared \cite{thebook}.
 
 These algorithms have tried to make the \rbase-tree grow more intelligently as insertions happen.
 We repeat a key fact stated in \cite{beckmannkriegelschneiderseeger90}: R-tree performance is very much dependent on the order of insertions.
@@ -192,7 +192,7 @@ Both of these have the obvious goal of creating a well-shaped R-tree.
 It is important to note that an early R-tree bulk-loading algorithm actually imposed a \emph{spatial} ordering based on space-filling (Hilbert) curves, a concept we discuss in greater depth later \cite{kamelfaloutsos94}.
 This allows R-trees to bulk load using the same techniques as B-trees.
 
-Initially, bulk loading was motivated by space utilization \cite{garcialopezleutenegger98,kamelfaloutsos95} and indeed we shall see that dynamic \rbase-trees have trouble making good use of space \cite{huanglinlin01}.
+Initially, bulk loading was motivated by space utilization \cite{garcialopezleutenegger98,kamelfaloutsos94} and indeed we shall see that dynamic \rbase-trees have trouble making good use of space \cite{huanglinlin01}.
 There are two natural designs for bulk loading: top-down and bottom-up \cite{thebook}.
 The book on R-trees \cite{thebook} has an excellent discussion on bulk-loading, and we present a small selection of the papers here.
 The first top-down bulk-loading algorithm to exploit spatial data seems to be \cite{garcialopezleutenegger98},
@@ -236,7 +236,7 @@ In addition to runtime, one may want to improve storage utilization.
 The first paper to focus on this for R-trees was \cite{huanglinlin01}.
 Even in our storage-rich world, however, there are also time-based benefits for keeping an R-tree compact.
 All other things being equal, an R-tree that manages to have fewer nodes immediately means queries have fewer nodes to check.
-But, even in B-trees, there is a natural tradeoff between having cheap dynamic operations---insert and delete---and the time savings by having a more compact structure \cite{tocite}.
+But, even in B-trees, there is a natural tradeoff between having cheap dynamic operations---insert and delete---and the time savings by having a more compact structure.
 In \cite{huanglinlin01} they extend Guttman's tree to Compact R-Trees with the following simple rule: if an entry is being inserted into a node and that node will split, instead put that entry into a \emph{sibling} to our almost-splitting node.
 Their experiments showed that it was competitive time-wise with Guttman's R-tree, but they did not compare it with the \rstar-tree.
 And they achieved almost \%100 space utilization, in contrast to the \%70 of ``normal'' R-trees.

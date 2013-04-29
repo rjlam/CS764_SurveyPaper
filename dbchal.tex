@@ -3,45 +3,45 @@ In this section we discuss the papers that took that information and develop way
 
 \subsection{Cost model}
 We hope to answer a very simple question: given a query, can we estimate how long that query will take?
-The efficacy of an R-tree query is usually measured by the number of expected page accesses \cite{tocite}.
-It is important to note that with spatial data, it is not unusual for computation time, not IO, to be the bottleneck \cite{tocite}.
-Indeed, we assume our actual data is simple, perhaps axis-aligned rectangles themselves---otherwise taking into account the geometric complexity of our actual data further complicates things \cite{aboulnaganaughton00}.
-[Add a sentence about CPU cost as a nontrivial factor in cost model.]
-However, IO is the one universal non-trivial source of expense, so we focus on that.
+The goal is to estimate some "cost" (usually disk accesses) needed to compute a range query over a spatial dataset.
+Some of the initial cost models were index-dependent---that is, they could only give an estimate knowing what the shape of the given R-tree was \cite{theodoridisstefanakissellis00} (see section 3).
+These same models also assumed a uniform input distribution.
+We assume our actual data is simple, perhaps axis-aligned rectangles themselves---otherwise taking into account the geometric complexity of our actual data further complicates things \cite{aboulnaganaughton00}.
+The cost of CPU time can be nontrivial, especially during joins, simply because geometric queries can be substantively more complicated than, say, an equijoin \cite{theodoridisstefanakissellis00}.
+However, that is not only the case: IO is the one universal non-trivial source of expense, so if there is any machine-dependent overhead we focus on that.
 
-So we hope to estimate how many page accesses an R-tree needs to satisfy a query for a given data set.
-Whereas predicting B-tree performance is relatively straightforward \cite{tocite}, recall how R-tree performance varies greatly on how ``well'' it is organized.
-Thus, it seems that predicting a query's cost is not just a function of the dataset, but also the structure of the R-tree built on it.
-Indeed, the initial cost models for R-trees were index-dependent \cite{tocite}.
-% \cite{see:list:in:theodoridisstefanakissellis}.
-Moreover, those models largely assumed \emph{uniformly distributed} input---quite an assumption, especially for spatial data \cite{tocite}.
+We will present three index-independent cost models: density surface, fractal dimension, and min-skew partitioning.
+A greater discussion of these and more can be found it \cite{thebook}.
+In our attempt to classify the techniques and motivation, we point to \cite{acharyapoosalaramaswamy99}, which briefly mentions the classification of histogram-based, sampling-based, and parametric-based cost models. This structure may guide one's understanding of the different models.
 
-Fortunately, our understanding has advanced to the point where index-independent, cost-models are available for non-uniform data.
-They are still parametrized by the spatial query, of course, but we are able to assume an arbitrary ``good'' R-tree.
-One of the first was by Theodoridis et. al. \cite{theodoridissellis96,theodoridisstefanakissellis00}, for \emph{range} and \emph{join} queries.
-Their cost model was only a function of the number of elements in the dataset and the spatial density.
-Their inducing a \emph{density surface}, like a histogram mapping partitions of the space to the local density, was the key advance to extending their cost model beyond uniform input.
-An alternative approach was fractal dimensionality, a concept introduced by \cite{tocite}.
-It was extended to [stuff] by \cite{tocite}.
+The first model we highlight is by Theodoridis et. al. \cite{theodoridissellis96,theodoridisstefanakissellis00} with their density surface approach.
+This paper was an important milestone because it extricated R-tree cost models from both uniformity assumption and index-dependence.
+The basic idea is to use the density (that is, how much space actually has data in it versus no data) to estimate how expensive a range query will be.
+They move beyond the uniformity assumption basically through a histogram: their density surface maps partitions of the space to a value indicating their density.
 
-Our previous metrics assumed, or hoped for, some a priori knowledge about the data.
-Failing that, we could attempt to estimate the properties of the data, which of course implies a means of maintaining that estimation.
-This data is often applied for query optimization \cite{chaudhuri98}, and the histogram is one of the main tools for that \cite{poosalahaasioannidisshekita96}.
+Another attempt to eliminate the uniform assumption was to use fractal dimension \cite{faloutsoskamel94}. This is restricted only to point data, and is a parametric cost model. Motivated by the application of Zipf to model nonuniform data distributions on regular indexes \cite{ioannidischristodoulakis91}, the authors started from the fact that a fractal both has an infinite number of points, but is highly non-uniform in their distribution. Thus, they work towards a fractal ``description'' of a given point dataset, and from there have a model for estimating range queries.
 
-[Histograms maintained to improve R-tree performance]
+Lastly, we mention the work done on min-skew partitioning.
+This is another histogram-like method, with the idea of grouping data into buckets such that the \emph{variance} of the density within each bucket is low \cite{acharyapoosalaramaswamy99}.
+It is important to note that the perspective of the authors is in estimating the \emph{size of the output} of a range query, and \emph{not} the page accesses involved.
+Their motivation is more for estimating facts about the spatial data, not the performance of a particular index over it.
+In this sense their goals overlap with ours, but is not precisely about R-trees.
 
-R-trees can be used \emph{as} spatial histograms \cite{achakeevseeger12}, and serves to estimate a cost of a \emph{range} query.
+Indeed, this sort of overlap exists quite a bit in the field of ``spatial histograms''.
+R-trees, as used in \cite{acharyapoosalaramaswamy99}, can be considered a sort of histogram over the spatial data itself.
+This viewpoint has continued: \cite{achakeevseeger12}.
 Their spatial histogram is to partition the data rectangles $r_1,\ldots,r_N$ into buckets, each bucket maintaining the average $x,y$ lengths of its constituents $r_i,\ldots,r_j$ and the bucket's density.
-Implied by its having a density, the bucket induces an MBR over its rectangles $r_i,\ldots,r_j$.
-In in their paper \cite{achakeevseeger12}, the authors decide on an equi-depth histogram.
-This is complicated by the fact that computing their optimal partition is $\NP$-hard \cite{muthukrishnanpoosalasuel99}.
+That they use R-trees as a heuristic for spatial histograms may be because computing their optimal partition is $\NP$-hard \cite{muthukrishnanpoosalasuel99}.
 Their design, guided by the cost-model of \cite{theodoridissellis96}, was thus computed with heuristics; the details are in \cite{achakeevseeger12a}.
- %
-There also exist histograms for the purpose of estimating, say, a join \cite{aboulnaganaughton00} [other papers exist].
- %Also takes into account other stuff.
- %Some experimental models: \cite{aboulnaganaughton00}, \cite{anyangsivasubramaniam01}, \cite{achakeevseeger12,achakeevseeger12a} has good datasets discussion, see for ``data model''.
+There is a brief but illuminating, and quite up-to-date, discussion of spatial histograms in \cite{mamoulis11}.
 
-\subsection{Optimality R-tree}
+Some final notes:
+There are also many other takes on understanding R-tree cost models.
+We have focused solely on the range query, but people have considered others, such as join \cite{thebook,aboulnaganaughton00}.
+Due to our limited understanding of spatial data, a variety of real-world and generated data models have been considered, which are well worth investigating for understading R-trees \cite{aboulnaganaughton00, anyangsivasubramaniam01, achakeevseeger12,achakeevseeger12a}.
+If nothing else, there are clearly many perspectives one can take to measuring the performance and behavior of an R-tree.
+
+\subsection{Optimal R-tree}
 It is important to mention that there exists an \emph{optimal} R-tree \cite{argeberghaverkortyi04}, called the PR-tree (Priority R-tree).
 For our purposes, we have three core points of discussion about this structure.
 1) What does it mean to be an optimal R-tree?
