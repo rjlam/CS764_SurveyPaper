@@ -1,7 +1,7 @@
 % Overview 
-To solve the problem of performing efficient searches on spatial data, 
-Guttman proposed the \rbase-tree, which inspired a plethora of different 
-variations. In Section~\ref{sec:rtrees} we describe the original \rbase-tree, 
+We begin our discussion by giving an overview of \rbase-trees, how they
+function, and their basic algorithms. In Section~\ref{sec:rtrees} we describe the
+structure that started everything, the original \rbase-tree, 
 and in Section~\ref{sec:variants} we discuss the \rstar-tree, the variant most 
 commonly used as a baseline for the structures discussed in later sections.
 
@@ -222,7 +222,7 @@ These are listed below:
 		have a tree of shorter height and thus shorter query paths.
 \end{description}
 
-\begin{figure}[ht!]
+\begin{figure}[b!]
 	\begin{algorithmic}
 		\Function{ChooseLeaf}{$R$, $E$}
 			\If {$R$ is a leaf}
@@ -245,7 +245,7 @@ These are listed below:
 	\label{fig:R*-Tree_ChooseLeaf}
 \end{figure}
 
-\begin{figure}[ht!]
+\begin{figure}[b!]
 \begin{algorithmic}
 	\Function{Split}{$N$, $E$}
 		\State{Determine the axis to split on}

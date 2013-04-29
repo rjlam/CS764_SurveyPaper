@@ -1,6 +1,28 @@
-What was the motivation for this survey? What was the point of the original
-paper?
+Although they are by no means the methods for accessing spatial data, the \rbase-tree and 
+its plethora of variants seem to be ubiquitous in spatial databases. They are for instance 
+used in scientific and medical research, geographic information systems, spatial datamining, 
+computer-aided design, and commercial systems. Other spatial access methods include 
+quadtrees, k-d-B trees, and multidimensional hashing\cite{samet95, gaedegunther98}.
+However, we focus our survey on \rbase-trees and relevant topics such as the details of 
+the \rbase-tree's basic algorithms and some of its implementation issues. We also discuss 
+how \rbase-trees are used in spatial queries, optimization of \rbase-trees, and the 
+\rbase-tree cost model. Given its prevalence in spatial databases, we conclude our paper with 
+an overview of \rbase-trees in parallel systems, spatio-temporal databases, and other applications. 
 
-An overview of the rest of the paper here.
+Other work that discuss \rbase-trees include surveys on multidimensional access methods
+by Gaede and G\"{u}nther \cite{gaedegunther98} and Samet\cite{samet95}. These papers
+discuss \rbase-trees and their variants only on a perfunctory level since the scope of their 
+work encompasses all types of spatial access methods. A fairly exhaustive book on 
+\rbase-trees and its variants has been previously published by Manolopoulos et al.
+in \cite{thebook} that covers most of the work on \rbase-trees before 2006. Our survey 
+extends these works with an in-depth discussion on more recent \rbase-tree variants as 
+well as newer optimizations and solutions to \rbase-tree implementation.
+
+The rest of the paper is as follows. In Section~\ref{sec:overview} we discuss the
+original \rbase-tree and it main variant, the \rstar-tree. In Section~\ref{sec:impchal}
+we examine basic queries using R-trees and associated optimizations. In 
+Section~\ref{sec:dbchal} we talk about topics related to \rbase-tree performance, and 
+finally in Section~\ref{sec:apps} we extend our discussion to the realm of parallel and
+distributed systems, as well as various real-world applications of \rbase-trees.
 
 

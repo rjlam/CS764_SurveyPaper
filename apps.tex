@@ -198,7 +198,7 @@ With the introduction of additional processes in a database there inherently
 comes the issue of correctness. Operations may contend for the same data 
 structure and without some method of concurrency control we have no guarantees
 on the data in the database. We focus on the topics of concurrency control, 
-recovery, and data migration. 
+and recovery.
 
 \paragraph{Concurrency Control} 
 Before we examine the topic of concurrency control, let us define the three
@@ -304,8 +304,8 @@ moves to the right sibling until it reaches a node with the expected LSN.
 Kornacker and Banks's R-tree also allows underfull nodes but deletes nodes as 
 soon as they are empty rather than wait for a periodic garbage collecting process.
 
-%Top down index region modification \cite{ravi1998improved},
-%partial lock coupling \cite{song2004enhanced}
+%Top down index region modification \cite{ravi1998improved}, ?
+%partial lock coupling \cite{song2004enhanced} ?
 	
 \paragraph{Recovery} To our knowledge there is not much literature that considers
 R-tree recovery. In Kornacker and Banks's paper on the R-link tree 
@@ -323,32 +323,29 @@ tree scheme in \cite{ng1994r}. They break down each update operation into four p
 splitting, inserting an entry into a node, deleting a node, and updating MBRs. Each
 of the parts is an atomic action that is writen to a WAL on completion. 
 
-Finally, 
-Haapasalo et al. present two methods with different consistency levels for R-tree 
-recovery using ARIES-based recovery \cite{mohan1992aries} in \cite{haapasalo2013recovery}. The
-first method uses a relaxed consistency for MBR modifications where all rectangle
-modifications, page-splits, and page-merges are recorded in the WAL as redo-only. 
+Finally, Haapasalo et al. present two methods with different consistency levels 
+for R-tree recovery using ARIES-based recovery \cite{mohan1992aries} in 
+\cite{haapasalo2013recovery}. The first method uses a relaxed consistency 
+for MBR modifications where all rectangle modifications, page-splits, and 
+page-merges are recorded in the WAL as redo-only. 
 Insertions and deletions that do not modify the tree structure are recorded in 
 normal log records. On undo of an insert, the object is deleted and a compensation
 log record is written if no underflow or MBR shrinkage occurs. Otherwise, the deletion
 path is traversed, and merges and MBR deflation are performed using redo-only log 
 records. Then the deletion is performed on the page holding the object and recorded
 in the log using a compensation log record. The converse occurs for undoing a delete.
-The consequence of this relaxed MBR consistency is that less write latches need to be
+A consequence of this relaxed MBR consistency is that less write latches need to be
 acquired during an update of an R-tree, but it could result in deterioration of the 
-R-tree structure if many rollbacks or aborts are performed. 
-The second method described by Haapasalo
-et al. uses a strictly consistent scheme with a latching method similar to Ng and 
-Kameda's R-couple tree\cite{ng1993concurrent} where a W-lock is acquired for all 
-nodes along the update path and upgraded to X-locks when changes are made. MBR 
-modifications are undoable during the period in which the nodes along the update 
-path are being modified and latched, but once the update has completed, the MBR 
-modifications are made redo-only by setting the UndoNextLSN of the final log record
-to jump over the chain of modifications. Page splits and page merges remain redo-only 
-and thus are performed before any MBR modifications occur. 
-	
-%\paragraph{Data Migration} How to migrate data.
-
+R-tree structure if many rollbacks or aborts are performed. The second method 
+described by Haapasalo et al. uses a strictly consistent scheme with a latching 
+method similar to Ng and Kameda's R-couple tree\cite{ng1993concurrent}, where 
+a W-lock is acquired for all nodes along the update path and upgraded to X-locks 
+when changes are made. MBR modifications are undoable during the period in 
+which the nodes along the update path are being modified and latched, but once 
+the update has completed, the MBR modifications are made redo-only by setting 
+the UndoNextLSN of the final log record to jump over the chain of modifications. 
+Page splits and page merges remain redo-only and thus are performed before 
+any MBR modifications occur. 
 
 \subsection{R-trees in Spatiotemporal Databases}
 There is extensive research for using R-tree variants in spatiotemporal
@@ -396,10 +393,10 @@ performance than an HR-tree.
 increase the storage utility of the tree. This means that multiple 
 versions of the R-tree corresponding to different times are stored such 
 that only the modified nodes with respect to a previous version are 
-held in later trees. So, supposing there are two times $t1$ and $t2$, the
-structure for $t2$ will point to nodes that are different from $t1$ and
-each node of $t2$ will point to either another node in $t2$ or a node in
-$t1$ (unmodified data). As mentioned before, this tree has better query
+held in later trees. So, supposing there are two times $t_1$ and $t_2$, the
+structure for $t_2$ will point to nodes that are different from $t_1$ and
+each node of $t_2$ will point to either another node in $t_2$ or a node in
+$t_1$ (unmodified data). As mentioned before, this tree has better query
 performance than the RT-tree and 2+3R-tree, but takes more memory.
 
 \paragraph{STR-tree} Pfoser et al. introduce the Spatial Temporal R-tree 
