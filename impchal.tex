@@ -16,20 +16,20 @@ In the next section we work towards a theory of \rbase-trees, and how we can und
 
 \subsection{Spatial Queries}
 The original query for which R-trees were designed was the ``search'' query \cite{guttman84}, now generally called the \emph{range} query \cite{thebook}.
-Briefly, given a range ``window'' (simply an axis-aligned rectangle, much like the MBRs in the R-tree itself) is provided as input, and the result is all leaves which have a nonempty intersection.
+Briefly, given a range ``window'' (simply an axis-aligned rectangle, much like the MBRs in the R-tree itself) is provided as input, and the result is all leaves with which it has a nonempty intersection.
 However, the R-tree soon found itself applied to many, many spatial queries---testament to its success \cite{thebook}.
 We simply cannot catalog all of the queries to which R-trees have been applied, but we will discuss some main examples.
 To motivate our selection, we can loosely classify spatial queries into \emph{topological}, \emph{directional}, \emph{distance}, and \emph{join} queries \cite{thebook,manolopoulos2003r}.
 
 Topological queries depend on the topological relationship between the data and our query.
-Range is exactly a topological query, but even then there are many subvarieties \cite{papadiassellistheodoridisegenhofer95,gaedegunther98}.
+For example, range is exactly a topological query, but even then there are many subvarieties \cite{papadiassellistheodoridisegenhofer95,gaedegunther98}.
 Directional queries imply a direction the data (e.g., the cardinal directions on geographic data) and the query depends on that global characteristic.
 A skyline query \cite{papadiastaofuseeger05} is an example of such a query.
 Distance queries assume (almost always Euclidean) distance between the spatial data and asks related queries.
 The fundamental example of this sort of query is the nearest-neighbor query \cite{roussopouloskelleyvincent95}.
 Lastly, spatial join is nothing more than a join query with a spatial predicate \cite{brinkhoffkriegelseeger93} such as ``intersects''.
 Thus, many of the previous query types can be reduced to a spatial join, but it is useful to consider these separate issues.
-A different kind of distinction can be made over how the R-tree is used---a single-scan operator (such as range) versus a multi-scan (such as join) \cite{brinkhoffkriegelseeger93,samet90}.
+As an aside, we note that a different kind of distinction can be made over how the R-tree is used---a single-scan operator (such as range) versus a multi-scan (such as join) \cite{brinkhoffkriegelseeger93,samet90}.
 Before examining exemplar queries in-depth, we emphasize that this taxonomy is not a strict partition---would the \emph{nearest surrounder} query \cite{leeleeleong10} be a directional or distance query?
 These are really just to give a sense of what R-trees are used for, not everything they can do.
 
@@ -40,8 +40,8 @@ We will also briefly mention \emph{aggregate queries}, more complex spatial oper
 
 \paragraph{The Range Query}
 The range query is perhaps the simplest spatial query and remains essentially unchanged since its introduction \cite{guttman84}.
-The idea is this: given a database of $R$ spatial objects represented by their MBRs and an input rectangle $s$, output all $r\in R$ such that $r\cap s\neq\emptyset$.
-Described briefly in English: at sub-tree $T$, recurse at each child if that child's MBR has a nonempty intersection with $s$.
+The idea is this: given a database $R$ of spatial objects represented by their MBRs and an input rectangle $s$, output all $r\in R$ such that $r\cap s\neq\emptyset$.
+To briefly describe its execution: at sub-tree $T$, recurse at each child if that child's MBR has a nonempty intersection with $s$.
 If $T$ is a leaf, output $T$ if it has a nonempty intersection with $s$.
 There exist many variations---perhaps the query is only for objects strictly containing, or contained within, $s$ \cite{gaedegunther98}.
 This general query's popularity has warranted intense study, and extensive tests have compared how R-tree variants perform on different inputs \cite{papadiassellistheodoridisegenhofer95}.
@@ -51,7 +51,7 @@ Some thought reveals that a range query can result in output equal to $\emptyset
 Moreover, this is true even if the range is the degenerate case: the point.
 A surprising fact is that there exist R-trees and queries such that the output is $\emptyset$ but the \emph{whole tree must be traversed}.
 This is true not just for Guttman's initial R-tree, but many advanced types as well (see Theorem 3 of \cite{argeberghaverkortyi04}).
-As evidence to its broad utility, we note that the range query on R-trees was adapted to \emph{approximating similarities between frequencies} \cite{agrawalfaloutsosswami93} by mapping the $k$ major features of the DFT transform into $k$-dimensional space.
+As evidence to its broad utility, we note that the range query on R-trees was adapted to approximating similarities between frequencies \cite{agrawalfaloutsosswami93} by mapping the $k$ major features of the DFT transform into $k$-dimensional space.
 
 \paragraph{The Spatial Join}
 A spatial join is nothing more than a general join, just with a spatial predicate---namely, join $r_1$ with $r_2$ iff $r_1\cap r_2\neq\emptyset$ \cite{brinkhoffkriegelseeger93}.
@@ -72,7 +72,7 @@ There exist experimental comparisons between these variations \cite{papadopoulos
 
 A recent survey \cite{jacoxsamet07} has a thorough and excellent presentation of all spatial join techniques.
 There the authors attempted to distill the undelying ideas and algorithms present in the \emph{many} different spatial join papers.
-A necessary read, but not the end---progress continues, for instance self-join on R-trees \cite{vassilakopouloscorralkaranikolas11}.
+It is a comprehensive treatment, but not the end---progress continues, for instance self-join on R-trees \cite{vassilakopouloscorralkaranikolas11}.
 
 \paragraph{The Nearest Neighbor Query}
 The nearest neighbor (NN) query takes as input a point $p$ and outputs the $k$ nearest objects to it (usually under Euclidean distance) \cite{roussopouloskelleyvincent95}.
@@ -90,12 +90,13 @@ Exact optimal is for aggregate nearest neighbors is \cite{papadiastaomouratidish
 In \cite{liliyiyaowang11} NN is further generalized to \emph{flexible aggregate similarity search}, where a more abstract notion of distance and relations can be used.
 In that paper they review much of the history of NN, of which R-trees played an important part.
 They also emphasize one real weakness of R-trees: their performance does fail for large dimensional data ($>6$, in this case).
+For this case there is the R-tree variant called the X-tree \cite{berchtold2001x}.
 
 \paragraph{Aggregate queries}
 As a glimpse of what's ``beyond'' NN queries, we briefly mention two more aggregate queries: \emph{convex hull} and then \emph{skyline}.
 There are well-known algorithms for convex hull in a non-database setting \cite{clrs3rd}, but adapting for huge data takes real work.
 Bohm and Kriegel \cite{bohmkriegel01} did so, relying on multidimensional indices (namely, R-trees).
-This has been the foundation of important subroutines, including many of the NN queries mentioned as well as, for instance, \emph{Furthest} Neighbors \cite{yaolikumar09}.
+This has been the foundation of important subroutines, including many of the NN queries mentioned as well as, for instance, \emph{furthest} neighbors \cite{yaolikumar09}.
 
 The skyline operator was introduced for databases in \cite{borzsonykossmannstocker01}.
 Intuitively, it seeks to find all points that are ``undominated'' in a dimension.
@@ -151,11 +152,11 @@ While largely superseded by the \rstar-tree, the \rplus variant joins it as regu
 These algorithms have tried to make the \rbase-tree grow more intelligently as insertions happen.
 We repeat a key fact stated in \cite{beckmannkriegelschneiderseeger90}: R-tree performance is very much dependent on the order of insertions.
 Whereas a B-tree's leaves always end up in the same order regardless of the permutation under which they were inserted, the leaves of an R-tree can be in wildly different locations \cite{gaedegunther98,beckmannkriegelschneiderseeger90,argeberghaverkortyi04}.
-From this observation \cite{beckmannkriegelschneiderseeger90} introduced the notion of forced-reinsertion.
+From this observation the \rstar-tree \cite{beckmannkriegelschneiderseeger90} introduced the notion of forced-reinsertion.
 If a node is about to split, they first see if its constituents can be re-inserted at the same level.
 This both saves a split and works to overcome the bias the tree may have from its first insertions.
-This idea is extended in \cite{schrekchen00} via \emph{branch grafting}.
-It was initially conceived of independent of \rstar-tree force-reinsertion method, but is quite similar.
+This idea is extended to \emph{branch grafting} \cite{schrekchen00}.
+Branch grafting was initially conceived independently of \rstar-tree force-reinsertion method, but is quite similar.
 Motivated by some of the observations of Greene \cite{greene89}, the idea is to graft node $N$'s children to a sibling node, if that would improve the shape of the tree.
 In general the idea of improving the shape of the tree by these retrospective modifications seems appealing.
 Unfortunately, in modern highly-parallel databases reorganizing a tree is often too difficult, and does bad things to the buffer \cite{beckmannseeger09}.
@@ -171,7 +172,7 @@ Stabbing numbers have become a subject in their own right, and continue to be mo
 It was just recently shown that computing the partition of $\mathcal S$ into $r$ parts in a way such that the partitions' MBRs have minimal stabbing number is $\NP$-hard \cite{bergkhosraviverdonschotweele11}.
 This is somewhat ameliorated by their demonstrating that there is an algorithm for computing the partition exponential in $r$, which quickly becomes small in R trees.
 However, even their approximation algorithms are not yet computed competitively quickly.
-Stabbing number has recent interest from a more general geometric perspective, for example \cite{durochermehrabi12}.
+Stabbing number has recent interest from a more general geometric perspective \cite{durochermehrabi12}.
 
 \paragraph{Improving Performance (Delaying Insertions)}
 We have seen some techniques to keep the tree well-formed during dynamic insertions.
@@ -181,7 +182,7 @@ Such was the motivation of the R Buffer tree \cite{argehinrichsvahrenholdvitter9
 The construction is sophisticated.
 Briefly, at certain levels of the R-tree, nodes were associated with in-memory buffers, and only when they are full are they spilled downwards to disk.
 This amortization reduces the number of disk IOs needed for insertions, but they also naturally extend to search queries and even deletions.
-This idea continues to be explored, for example by \cite{biveinissaltenisjensen07}.
+This idea continues to be explored \cite{biveinissaltenisjensen07}.
 
 We can extend the idea of less-dynamic insertions to its logical conclusion and consider completely static data.
 This is quite common is spatial databases: the 1950s census is unlikely to change.
@@ -227,7 +228,7 @@ A key advantage implied by the B-tree-like behavior of the Hilbert tree is that 
 This allows it to have much better space utilization \cite{kamelfaloutsos94}.
 This better space utilization itself also improves performance, and harnessing that idea separately from space-filling curves is our third and final perspective.
 
-As a final note, we have implicitly focused on imposing an ordering to create a well-formed tree, but this idea extends to spatial join as well \cite{jacoxsamet07}.
+As a final note, we have implicitly focused on imposing an ordering to create a well-formed tree, but this idea extends to spatial join as well \cite{jacoxsamet07,orenstein86}.
 The ordering can be used to help determine which chunks of the index can be skipped during a join.
 The utility of spatial orderings is really quite subtle and touches many applications.
 

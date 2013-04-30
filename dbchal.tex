@@ -1,4 +1,4 @@
-As we have toured the classic enhancements and improvements to R-tree performance, we have encountered experimental data hinting towards when and how R-trees perform well and why.
+As we have toured the classic enhancements and improvements to R-tree performance, we have encountered ideas hinting towards when and how R-trees perform well and why.
 In this section we discuss the papers that took that information and develop ways to understand R-tree performance.
 
 \subsection{Cost model}
@@ -8,11 +8,11 @@ Some of the initial cost models were index-dependent---that is, they could only 
 These same models also assumed a uniform input distribution.
 We assume our actual data is simple, perhaps axis-aligned rectangles themselves---otherwise taking into account the geometric complexity of our actual data further complicates things \cite{aboulnaganaughton00}.
 The cost of CPU time can be nontrivial, especially during joins, simply because geometric queries can be substantively more complicated than, say, an equijoin \cite{theodoridisstefanakissellis00}.
-However, that is not only the case: IO is the one universal non-trivial source of expense, so if there is any machine-dependent overhead we focus on that.
+However, that is not always the case, so, as I/O is the one universal non-trivial source of expense we focus on that.
 
 We will present three index-independent cost models: density surface, fractal dimension, and min-skew partitioning.
-A greater discussion of these and more can be found it \cite{thebook}.
-In our attempt to classify the techniques and motivation, we point to \cite{acharyapoosalaramaswamy99}, which briefly mentions the classification of histogram-based, sampling-based, and parametric-based cost models. This structure may guide one's understanding of the different models.
+A deeper discussion of these and more can be found in the book on R-trees \cite{thebook}.
+In our attempt to classify the techniques and motivation, we point to an early paper on this topic \cite{acharyapoosalaramaswamy99}, which mentions the classification of histogram-based, sampling-based, and parametric-based cost models. This structure may guide one's understanding of the different models.
 
 The first model we highlight is by Theodoridis et. al. \cite{theodoridissellis96,theodoridisstefanakissellis00} with their density surface approach.
 This paper was an important milestone because it extricated R-tree cost models from both uniformity assumption and index-dependence.
@@ -29,11 +29,11 @@ In this sense their goals overlap with ours, but is not precisely about R-trees.
 
 Indeed, this sort of overlap exists quite a bit in the field of ``spatial histograms''.
 R-trees, as used in \cite{acharyapoosalaramaswamy99}, can be considered a sort of histogram over the spatial data itself.
-This viewpoint has continued: \cite{achakeevseeger12}.
+This viewpoint has continued, for instance by Achakeev and Seeger \cite{achakeevseeger12}.
 Their spatial histogram is to partition the data rectangles $r_1,\ldots,r_N$ into buckets, each bucket maintaining the average $x,y$ lengths of its constituents $r_i,\ldots,r_j$ and the bucket's density.
 That they use R-trees as a heuristic for spatial histograms may be because computing their optimal partition is $\NP$-hard \cite{muthukrishnanpoosalasuel99}.
 Their design, guided by the cost-model of \cite{theodoridissellis96}, was thus computed with heuristics; the details are in \cite{achakeevseeger12a}.
-There is a brief but illuminating, and quite up-to-date, discussion of spatial histograms in \cite{mamoulis11}.
+There is a brief but illuminating, and quite up-to-date, discussion of spatial histograms in a recent book on spatial access methods \cite{mamoulis11}.
 
 Some final notes:
 There are also many other takes on understanding R-tree cost models.
@@ -53,11 +53,9 @@ Points 1) and 3) are especially well-discussed in \cite{yi12}, which is a thorou
 The optimal R-tree is only built on static data, and answers range queries in optimal time.
 (Note though that the PR-tree does have a fast insert---but it's not promised to maintain optimality---and a slow insert which maintains its optimality \cite{argeberghaverkortyi04}.)
 From previous work \cite{kanthsingh99} it was known that a range query had a necessarily high upper bound in terms of node-accesses.
-Formally, we have the [theorem].
 Thus, if a structure could match that upper bound, that structure is optimal.
-The optimal R-tree effectively matches that bound with a time [time] \cite{yi12}.
-The extra $T/B$ term is obviously optimal cost for outputting the results, so the slight difference between [term1,term2] is inconsequential.
-It is also important to note this does \emph{not} reflect a universal lower bound for range queries: there are objects other than R-trees [see yi12 citation 3].
+The optimal R-tree effectively matches that bound \cite{yi12}.
+It is also important to note this does \emph{not} reflect a universal lower bound for range queries: there are objects other than R-trees \cite{argesamoladasvitter99}.
 Practically speaking, the optimal R-tree is competitive with its heuristic counterparts---moreover, it obviously does not perform poorly on any dataset.
 In contrast, one can construct bad datasets for \rstar-trees and Hilbert R-trees.
 

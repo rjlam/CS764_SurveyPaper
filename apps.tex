@@ -1,6 +1,6 @@
 The discussion thus far has focused on spatial data in the domain of a single
 processor system with the R-tree stored all on one disk. We now extend the 
-scope of our survey of R-trees into the topics of parallel systems, 
+scope of our survey into the topics of parallel systems, 
 spatiotemporal databases, and applications of R-trees.
 
 % Went for a weird title..... can be changed :P
@@ -16,7 +16,7 @@ communicates to another processor using some type of network.
 Thus the basic challenge for R-tree 
 implementation in such systems boils down to exploiting parallelism to 
 increase both CPU and I/O performance. In the following sections we discuss
-R-trees in multidisk, single-cpu systems and in multiprocessor systems.
+R-trees in multidisk, single-CPU systems and in multiprocessor systems.
 
 \subsubsection{R-trees in Multidisk Systems}
 The architecture of a multidisk system consists of a single processor and 
@@ -29,7 +29,7 @@ balance. Below are a few structures that fall under this category.
 The independent R-tree method \cite{kamel1992parallel, thebook} uses separate 
 R-tree structures for each disk.
 Data is distributed using two approaches: data distribution and space 
-partitioning. The former uses hashing or round-robin (RR) to assign disks to
+partitioning. The former uses hashing or round-robin to assign disks to
 R-tree entries. The second partitions the R-tree into sections such that 
 child nodes reside on the same disk as their parents. The first approach 
 has good data load distribution but poor locality, whereas the second approach
@@ -68,7 +68,7 @@ methods of node-to-disk distribution both in terms of query latency and load.
  
 \subsubsection{R-trees in Multiprocessor systems}
 More recent research has focused on multiprocessor systems, especially in 
-lieu of the growing popularity of distributed services and multicpu processors.
+light of the growing popularity of distributed services and multi-CPU processors.
 The multiprocessor system, unlike the multidisk system, consists of multiple 
 processors. This could be in either a multicore machine in a shared-resource
 environment or a distributed system with many machines in a shared-nothing 
@@ -105,13 +105,13 @@ it.
 Another variant for the shared-nothing environment is the Master-Client R-tree 
 (MC-Rtree) proposed in \cite{schnitzer1999master} by Schnitzer and Leutenegger,  
 which is similar to the 
-M-Rtree in the previous section. However, instead of having a R-tree index 
+M-Rtree. However, instead of having a R-tree index 
 structure residing only in the master, each client also has a subtree. As before,
 the master holds only non-leaf nodes; however, the leaf level entries on the 
-master are of the form ($mbr$, $siteID$). Moreover, the clients each have R-tree
+master are of the form ($mbr$, $\mathit{siteID}$). Moreover, the clients each have R-tree % using math itals fixes weird kerning
 structures that index the objects assigned to that site. This means that on a 
 query it traverses the tree as usual, and as soon as a master leaf has been 
-touched it stores the client $siteID$ in a list and sends the query MBR to the 
+touched it stores the client $\mathit{siteID}$ in a list and sends the query MBR to the 
 site, which processes the request. The master then waits for clients to respond
 with any overlapping objects. 
 
@@ -334,7 +334,7 @@ log record is written if no underflow or MBR shrinkage occurs. Otherwise, the de
 path is traversed, and merges and MBR deflation are performed using redo-only log 
 records. Then the deletion is performed on the page holding the object and recorded
 in the log using a compensation log record. The converse occurs for undoing a delete.
-A consequence of this relaxed MBR consistency is that less write latches need to be
+A consequence of this relaxed MBR consistency is that fewer write latches need to be
 acquired during an update of an R-tree, but it could result in deterioration of the 
 R-tree structure if many rollbacks or aborts are performed. The second method 
 described by Haapasalo et al. uses a strictly consistent scheme with a latching 
@@ -390,7 +390,7 @@ performance than an HR-tree.
 
 \paragraph{HR-tree} HR-trees, or historical R-trees, 
 \cite{nascimento1999evaluation} uses the idea of overlapping trees to 
-increase the storage utility of the tree. This means that multiple 
+increase the storage utilization of the tree. This means that multiple 
 versions of the R-tree corresponding to different times are stored such 
 that only the modified nodes with respect to a previous version are 
 held in later trees. So, supposing there are two times $t_1$ and $t_2$, the
@@ -440,7 +440,7 @@ and HR-tree in a mixed interval and timestamp query workload.
 \subsubsection{Indexing Current Data}
 This class of spatiotemporal \rbase-trees index data on the current positions of 
 objects. This poses the issue of how to maintain fresh data and what constitutes 
-as "now" during a query. 
+as ``now'' during a query. 
 
 \paragraph{2+3R-tree} A 2+3R-tree\cite{nascimento1999evaluation} uses two 
 \rbase-trees to index two-dimensional points (current data that only have
@@ -546,7 +546,8 @@ in these fields below.
 	indexing method built on R-trees for increasing performance in brain 
 	simulations\cite{tauheed2012accelerating}.
 	\item[Cloud computing] R-trees are also used in the cloud setting. Work
-	on how to index spatial data in the cloud has been done by Wang et al. in	 \cite{wang2009retrieving} with their RT-CAN approach that combines the 
+	on how to index spatial data in the cloud has been done by Wang et al. in
+	 \cite{wang2009retrieving} with their RT-CAN approach that combines the 
 	R-tree with the CAN protocol. Similarly, Zhang et al. combine the R-tree
 	with a KD-tree for a multidimensional index for managing cloud resources 
 	in \cite{zhang2009efficient}.
