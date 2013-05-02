@@ -12,14 +12,17 @@ However, that is not always the case, so, as I/O is the one universal non-trivia
 
 We will present three index-independent cost models: density surface, fractal dimension, and min-skew partitioning.
 A deeper discussion of these and more can be found in the book on R-trees \cite{thebook}.
-In our attempt to classify the techniques and motivation, we point to an early paper on this topic \cite{acharyapoosalaramaswamy99}, which mentions the classification of histogram-based, sampling-based, and parametric-based cost models. This structure may guide one's understanding of the different models.
+In our attempt to classify the techniques and motivation, we point to an early paper on this topic \cite{acharyapoosalaramaswamy99}, which mentions the classification of histogram-based, sampling-based, and parametric-based cost models. This structure may guide ones understanding of the different models.
 
 The first model we highlight is by Theodoridis et. al. \cite{theodoridissellis96,theodoridisstefanakissellis00} with their density surface approach.
 This paper was an important milestone because it extricated R-tree cost models from both uniformity assumption and index-dependence.
 The basic idea is to use the density (that is, how much space actually has data in it versus no data) to estimate how expensive a range query will be.
 They move beyond the uniformity assumption basically through a histogram: their density surface maps partitions of the space to a value indicating their density.
 
-Another attempt to eliminate the uniform assumption was to use fractal dimension \cite{faloutsoskamel94}. This is restricted only to point data, and is a parametric cost model. Motivated by the application of Zipf to model nonuniform data distributions on regular indexes \cite{ioannidischristodoulakis91}, the authors started from the fact that a fractal both has an infinite number of points, but is highly non-uniform in their distribution. Thus, they work towards a fractal ``description'' of a given point dataset, and from there have a model for estimating range queries.
+Another attempt to eliminate the uniform assumption was to use fractal dimension \cite{faloutsoskamel94}. This is restricted only to point data, and is a parametric cost model.
+Motivated by the application of Zipf to model nonuniform data distributions on regular indexes \cite{ioannidischristodoulakis91}, the authors started from the fact that a fractal both has an infinite number of points, but is highly non-uniform in their distribution.
+Moreover, a fractal is self-describing: a small number of points dictates the global structure.
+Thus, they work towards a fractal ``description'' of a given point dataset, and from there have a model for estimating range queries.
 
 Lastly, we mention the work done on min-skew partitioning.
 This is another histogram-like method, with the idea of grouping data into buckets such that the \emph{variance} of the density within each bucket is low \cite{acharyapoosalaramaswamy99}.
@@ -38,7 +41,7 @@ There is a brief but illuminating, and quite up-to-date, discussion of spatial h
 Some final notes:
 There are also many other takes on understanding R-tree cost models.
 We have focused solely on the range query, but people have considered others, such as join \cite{thebook,aboulnaganaughton00}.
-Due to our limited understanding of spatial data, a variety of real-world and generated data models have been considered, which are well worth investigating for understading R-trees \cite{aboulnaganaughton00, anyangsivasubramaniam01, achakeevseeger12,achakeevseeger12a}.
+Due to our limited understanding of spatial data, a variety of real-world and generated data models have been considered, which are well worth investigating for understanding R-trees \cite{aboulnaganaughton00, anyangsivasubramaniam01, achakeevseeger12,achakeevseeger12a}.
 If nothing else, there are clearly many perspectives one can take to measuring the performance and behavior of an R-tree.
 
 \subsection{Optimal R-tree}

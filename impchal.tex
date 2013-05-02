@@ -71,7 +71,7 @@ Both the original and BFS algorithms used a buffer to essentially help the algor
 There exist experimental comparisons between these variations \cite{papadopoulosrigauxscholl99}, and at the time they concluded buffer size was the main focus point.
 
 A recent survey \cite{jacoxsamet07} has a thorough and excellent presentation of all spatial join techniques.
-There the authors attempted to distill the undelying ideas and algorithms present in the \emph{many} different spatial join papers.
+There the authors attempted to distill the underlying ideas and algorithms present in the \emph{many} different spatial join papers.
 It is a comprehensive treatment, but not the end---progress continues, for instance self-join on R-trees \cite{vassilakopouloscorralkaranikolas11}.
 
 \paragraph{The Nearest Neighbor Query}
@@ -85,7 +85,7 @@ There exist other heuristics as well in the same paper \cite{roussopouloskelleyv
 
 The NN query is the basic distance query for other distance queries such as spatial aggregate queries (perimeter, average-area, and so on) \cite{corralalmendros-jimenez07}.
 There are more complex variations of NN, such an the \emph{aggregate} NN query.
-There the objective is to find a point $p$ such that its $k$ nearest neighbors (for fixed $k$) have minimial \emph{total} distance.
+There the objective is to find a point $p$ such that its $k$ nearest neighbors (for fixed $k$) have minimal \emph{total} distance.
 Exact optimal is for aggregate nearest neighbors is \cite{papadiastaomouratidishui05}, according to \cite{liliyiyaowang11}.
 In \cite{liliyiyaowang11} NN is further generalized to \emph{flexible aggregate similarity search}, where a more abstract notion of distance and relations can be used.
 In that paper they review much of the history of NN, of which R-trees played an important part.
@@ -135,8 +135,7 @@ So in our efforts to improve our R-tree performance, we want to somehow grow a `
 Perhaps the most common guiding principle for growing R-trees efficiently is to reduce the overlap between MBRs.
 In our discussion we consider only range queries---this is both one of the few queries for which we have a strong understanding, and is fundamental enough to reasonably hope its efficiency influences more complex queries.
 
-Note that, as MBRs on different levels are either wholly contained or entirely disjoint from one another, when we discuss overlap between MBRs we assume they are on the same level of the R-tree.
-The only exception, of course, are the MBRs for the leaves.
+Note that when we discuss overlap between MBRs we assume they are on the same level of the R-tree.
 We also, for shorthand, refer to nodes as their own MBRs, making it natural to speak about the ``intersection of two nodes'' (by which we mean the intersection of their MBRs).
 Guttman \cite{guttman84} presumed that minimizing the total area was the best choice for optimizing search (range) queries.
 Thus, on a node split, for example, the ``optimal algorithm'' considers all possible partitions of the children, and chooses that which minimizes the \emph{sum} of the area of the two new children.
@@ -176,12 +175,12 @@ Stabbing number has recent interest from a more general geometric perspective \c
 
 \paragraph{Improving Performance (Delaying Insertions)}
 We have seen some techniques to keep the tree well-formed during dynamic insertions.
-This is not an end to itself: the goal, of course, is to minimize IOs.
+This is not an end to itself: the goal, of course, is to minimize I/Os.
 What if we extend an R-tree so that we do not commit an insertion to disk until necessary?
 Such was the motivation of the R Buffer tree \cite{argehinrichsvahrenholdvitter99}.
 The construction is sophisticated.
 Briefly, at certain levels of the R-tree, nodes were associated with in-memory buffers, and only when they are full are they spilled downwards to disk.
-This amortization reduces the number of disk IOs needed for insertions, but they also naturally extend to search queries and even deletions.
+This amortization reduces the number of disk I/Os needed for insertions, but they also naturally extend to search queries and even deletions.
 This idea continues to be explored \cite{biveinissaltenisjensen07}.
 
 We can extend the idea of less-dynamic insertions to its logical conclusion and consider completely static data.

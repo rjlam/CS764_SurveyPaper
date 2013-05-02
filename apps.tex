@@ -203,7 +203,7 @@ and recovery.
 \paragraph{Concurrency Control} 
 Before we examine the topic of concurrency control, let us define the three
 different locking modes used in our discussion and their compatibility with
-eachother. We use the terminology described by Ng and Kameda in 
+each other. We use the terminology described by Ng and Kameda in 
 \cite{ng1993concurrent}. As seen in Table~\ref{table:locks} there are Shared 
 (S) locks, Exclusive (X) locks, and Warning (W) locks. Shared locks allow multiple 
 processes to acquire locks on a particular node and are used when the process
@@ -287,7 +287,7 @@ the insertion path are recorded in the pending update list to be handled later
 by any other database operation. Deletion is handled by allowing underfull nodes.
 When a node is empty it is marked for deletion and taken care of by garbage
 collection. No performance analysis is performed in \cite{ng1994r}, although one
-can infer that the decreased storage utilization may cause performance degredation
+can infer that the decreased storage utilization may cause performance degradation
 and that update latency is increased.
 
 Kornacker and Banks's take on the R-link tree\cite{kornacker1995high} extends 
@@ -317,11 +317,11 @@ changing entries are treated as separate atomic actions that are not rolled back
 even if the transaction that caused the change aborts. This is advantageous since
 this allows pages that have been modified in a split to be unlocked once the entry
 has been written to the WAL. However a consequence of this scheme is performance
-degredation from overly large MBRs when the transaction causing MBR enlargment 
+degradation from overly large MBRs when the transaction causing MBR enlargement 
 crashes or aborts. Ng and Kameda also briefly talk about recovery for their R-link
 tree scheme in \cite{ng1994r}. They break down each update operation into four parts:
 splitting, inserting an entry into a node, deleting a node, and updating MBRs. Each
-of the parts is an atomic action that is writen to a WAL on completion. 
+of the parts is an atomic action that is written to a WAL on completion. 
 
 Finally, Haapasalo et al. present two methods with different consistency levels 
 for R-tree recovery using ARIES-based recovery \cite{mohan1992aries} in 
@@ -377,7 +377,7 @@ entry based on the $oid$ and time. When an object is inserted into the
 database, it is placed in the R-tree with an entry of form 
 ($oid$, $mbr$, $t_s$, $t_e$, $p$), where $t_s$ and $t_e$ refer to the 
 start and end time with which the object corresponds. Spatial queries 
-are done as in the \rbase-tree case by traveral on the \rbase-tree 
+are done as in the \rbase-tree case by traversal on the \rbase-tree 
 structure, meaning search performance on spatial data is the same as in 
 the \rbase-tree case. Temporal queries are performed on the TSB-tree. 
 RT-trees use the method of update on change to limit data history.
@@ -419,10 +419,10 @@ basic R-tree, but each leaf node only holds segments for a single
 trajectory. This means that spatially close trajectories will be stored in 
 different leaf nodes meaning the query cost will increase due to more 
 overlap among internal MBRs. Still, it outperforms the STR-tree, especially
-for trajectory based queries, and performs comparibly to the R-tree. 
+for trajectory based queries, and performs comparably to the R-tree. 
 
 \paragraph{MV3R-tree} In \cite{tao2001mv3r}, Tao and Papadias propose the 
-Multi-version 3D R-tree (MV3R-tree), which combines a Mult-version R-tree (MVR-tree) 
+Multi-version 3D R-tree (MV3R-tree), which combines a Multi-version R-tree (MVR-tree) 
 and the 3D R-tree\cite{nascimento1999evaluation} built atop the MVR-tree leaf nodes.
 MVR-trees have entries with the form ($mbr$, $t_{start}$, $t_{end}$, $pointer$)
 where $t$ indicates the time the record was inserted or deleted. The $pointer$ 
@@ -536,7 +536,7 @@ in these fields below.
 	geographical data. R-tree structures typically used for GISs are the 
 	\rbase-tree\cite{guttman84} and \rstar-tree\cite{beckmannkriegelschneiderseeger90}.
 	\item[Computer Aided Design (CAD)] CAD applications are used to assist
-	engineers in analysing and creating designs by providing models, 
+	engineers in analyzing and creating designs by providing models, 
 	generating drawings, and running simulations. In the layers beneath the
 	application, R-trees are used for storing information about created 
 	objects. Any of the spatial databases previously mentioned can be used 
