@@ -51,14 +51,14 @@ For our purposes, we have three core points of discussion about this structure.
 2) How does its behavior reflect the techniques and ideas from section~\ref{sec:impchal}?
 3) What can this tell us about future development of R-trees?
 We discuss each point in turn.
-Points 1) and 3) are especially well-discussed in \cite{yi12}, which is a thorough summary of the results of the main paper, \cite{argeberghaverkortyi04}, and we direct the interested reader there.
+Yi provides a good discussion of points 1) and 3) in his summary of the original paper \cite{yi12}, and we direct the interested reader there.
 
 The optimal R-tree is only built on static data, and answers range queries in optimal time.
 (Note though that the PR-tree does have a fast insert---but it's not promised to maintain optimality---and a slow insert which maintains its optimality \cite{argeberghaverkortyi04}.)
-From previous work \cite{kanthsingh99} it was known that a range query had a necessarily high upper bound in terms of node-accesses.
-Thus, if a structure could match that upper bound, that structure is optimal.
+Previously, Kanth and Singh determined that R-tree-like structures have a lower bound on the number of required node-traversals to satify a range query \cite{kanthsingh99}.
+Thus, if a structure could match that lower bound, that structure is optimal.
 The optimal R-tree effectively matches that bound \cite{yi12}.
-It is also important to note this does \emph{not} reflect a universal lower bound for range queries: there are objects other than R-trees \cite{argesamoladasvitter99}.
+It is also important to note this does \emph{not} reflect a universal lower bound for range queries: there are objects other than R-trees \cite{argesamoladasvitter99} which have different constraints.
 Practically speaking, the optimal R-tree is competitive with its heuristic counterparts---moreover, it obviously does not perform poorly on any dataset.
 In contrast, one can construct bad datasets for \rstar-trees and Hilbert R-trees.
 
