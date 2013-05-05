@@ -1,18 +1,18 @@
 As we have toured the classic enhancements and improvements to R-tree performance, we have encountered ideas hinting towards when and how R-trees perform well and why.
-In this section we discuss the papers that took that information and develop ways to understand R-tree performance.
+In this section we discuss the papers that took that information and developed ways to understand R-tree performance.
 
 \subsection{Cost model}
 We hope to answer a very simple question: given a query, can we estimate how long that query will take?
-The goal is to estimate some "cost" (usually disk accesses) needed to compute a range query over a spatial dataset.
+The goal is to estimate some "cost" (usually the number of disk accesses) needed to compute a range query over a spatial dataset.
 Some of the initial cost models were index-dependent---that is, they could only give an estimate knowing what the shape of the given R-tree was \cite{theodoridisstefanakissellis00} (see section 3).
 These same models also assumed a uniform input distribution.
 We assume our actual data is simple, perhaps axis-aligned rectangles themselves---otherwise taking into account the geometric complexity of our actual data further complicates things \cite{aboulnaganaughton00}.
-The cost of CPU time can be nontrivial, especially during joins, simply because geometric queries can be substantively more complicated than, say, an equijoin \cite{theodoridisstefanakissellis00}.
+The cost of CPU time can be nontrivial, especially during joins, simply because geometric queries can be substantially more complicated than, say, an equijoin \cite{theodoridisstefanakissellis00}.
 However, that is not always the case, so, as I/O is the one universal non-trivial source of expense we focus on that.
 
 We will present three index-independent cost models: density surface, fractal dimension, and min-skew partitioning.
 A deeper discussion of these and more can be found in the book on R-trees \cite{thebook}.
-In our attempt to classify the techniques and motivation, we point to an early paper on this topic \cite{acharyapoosalaramaswamy99}, which mentions the classification of histogram-based, sampling-based, and parametric-based cost models. This structure may guide ones understanding of the different models.
+In our attempt to classify the techniques and motivation, we point to an early paper on this topic \cite{acharyapoosalaramaswamy99}, which mentions the classification of histogram-based, sampling-based, and parametric-based cost models. This structure may guide one's understanding of the different models.
 
 The first model we highlight is by Theodoridis et. al. \cite{theodoridissellis96,theodoridisstefanakissellis00} with their density surface approach.
 This paper was an important milestone because it extricated R-tree cost models from both uniformity assumption and index-dependence.
@@ -26,14 +26,14 @@ Thus, they work towards a fractal ``description'' of a given point dataset, and 
 
 Lastly, we mention the work done on min-skew partitioning.
 This is another histogram-like method, with the idea of grouping data into buckets such that the \emph{variance} of the density within each bucket is low \cite{acharyapoosalaramaswamy99}.
-It is important to note that the perspective of the authors is in estimating the \emph{size of the output} of a range query, and \emph{not} the page accesses involved.
+It is important to note that the perspective of the authors is in estimating the \emph{size of the output} of a range query, and \emph{not} the number of page accesses involved.
 Their motivation is more for estimating facts about the spatial data, not the performance of a particular index over it.
 In this sense their goals overlap with ours, but is not precisely about R-trees.
 
 Indeed, this sort of overlap exists quite a bit in the field of ``spatial histograms''.
-R-trees, as used in \cite{acharyapoosalaramaswamy99}, can be considered a sort of histogram over the spatial data itself.
+R-trees, as used in \cite{acharyapoosalaramaswamy99}, can be considered something like a histogram over the spatial data itself.
 This viewpoint has continued, for instance by Achakeev and Seeger \cite{achakeevseeger12}.
-Their spatial histogram is to partition the data rectangles $r_1,\ldots,r_N$ into buckets, each bucket maintaining the average $x,y$ lengths of its constituents $r_i,\ldots,r_j$ and the bucket's density.
+Their spatial histogram partitions the data rectangles $r_1,\ldots,r_N$ into buckets, each bucket maintaining the average $x,y$ lengths of its constituents $r_i,\ldots,r_j$ and the bucket's density.
 That they use R-trees as a heuristic for spatial histograms may be because computing their optimal partition is $\NP$-hard \cite{muthukrishnanpoosalasuel99}.
 Their design, guided by the cost-model of \cite{theodoridissellis96}, was thus computed with heuristics; the details are in \cite{achakeevseeger12a}.
 There is a brief but illuminating, and quite up-to-date, discussion of spatial histograms in a recent book on spatial access methods \cite{mamoulis11}.
@@ -72,9 +72,9 @@ This is not to suggest the construction is trivial! Rather, it is to show the su
 
 Does this PR-tree tell us anything about the future of R-trees?
 It would be interesting to see if we can reconcile its optimality with our design intuitions.
-The summary by Yi \cite{yi12} lists some immediate questions PR-trees: can it be extended with a fast, optimality-maintaining insert, thereby making it dynamic?
+The summary by Yi \cite{yi12} lists some open questions about PR-trees: can it be extended with a fast, optimality-maintaining insert, thereby making it dynamic?
 Does there exist an R-tree optimal for other queries (particularly nearest-neighbor)?
-Lastly, the upper-bound theorem fails in the degenerate case when the query is a point---there we return to the notion of stabbing number.
+Lastly, the upper-bound theorem fails in the degenerate case when the query is a point---there we return to the notion of stabbing number: can we obtain a better bound?
 There is a recent advance related to that last front: recall \cite{bergkhosraviverdonschotweele11} saying that computing the minimal stabbing-point MBR set covering a set of points is $\NP$-hard.
 
 For general R-trees, it is intriguing that optimality in a setting was obtained by appealing to a different, but related, data structure.

@@ -2,23 +2,23 @@
 
 
 The \rstar-tree is the de facto standard R-tree implementation \cite{thebook}.
-Its success is due to the effective heuristics used to improve the R-tree performance---somehow its algorithms produce ``better'' R-trees.
+Its success is due to the effective heuristics used to improve the R-tree performance---its algorithms produce ``better'' R-trees.
 As its success is based on heuristics, it is hard to see \emph{why} it is successful.
 In fact, the notion of an R-tree variant being better or worse than another is hard to define, but this is not surprising: lacking a strict ordering, spatial data does not lend itself to a ``natural'' optimal structure \cite{gaedegunther98}.
 Moreover, the sheer variety of spatial queries makes it difficult to understand what operations we're actually trying to improve.
 
 In this section we will explore and list many improvements and changes made to R-trees from a conceptual perspective.
 The recent book on R-trees \cite{thebook} has a comprehensive list up to its publication on the advancements made to R-trees.
-Here we attempt to illustrate more the common patterns emerging from these results.
+Here we attempt to illustrate the common patterns emerging from these results.
 In order to motivate and provide context for this presentation, we first introduce and discuss some exemplar queries.
 After this we present the major themes towards improving \rbase-trees.
 In the next section we work towards a theory of \rbase-trees, and how we can understand their behavior.
 
 \subsection{Spatial Queries}
-The original query for which R-trees were designed was the ``search'' query \cite{guttman84}, now generally called the \emph{range} query \cite{thebook}.
-Briefly, given a range ``window'' (simply an axis-aligned rectangle, much like the MBRs in the R-tree itself) is provided as input, and the result is all leaves with which it has a nonempty intersection.
-However, the R-tree soon found itself applied to many, many spatial queries---testament to its success \cite{thebook}.
-We simply cannot catalog all of the queries to which R-trees have been applied, but we will discuss some main examples.
+The original query type for which R-trees were designed was the ``search'' query \cite{guttman84}, now generally called the \emph{range} query \cite{thebook}.
+Briefly, given a range ``window'' (simply an axis-aligned rectangle, much like the MBRs in the R-tree itself) is provided as input, and the result is all intersecting leaf entries.
+However, the R-tree soon found itself applied to many, many spatial query types---testament to its success \cite{thebook}.
+We simply cannot catalog all of the query types to which R-trees have been applied, but we will discuss some main examples.
 To motivate our selection, we can loosely classify spatial queries into \emph{topological}, \emph{directional}, \emph{distance}, and \emph{join} queries \cite{thebook,manolopoulos2003r}.
 
 Topological queries depend on the topological relationship between the data and our query.
@@ -31,11 +31,11 @@ Lastly, spatial join is nothing more than a join query with a spatial predicate 
 Thus, many of the previous query types can be reduced to a spatial join, but it is useful to consider these separate issues.
 As an aside, we note that a different kind of distinction can be made over how the R-tree is used---a single-scan operator (such as range) versus a multi-scan (such as join) \cite{brinkhoffkriegelseeger93,samet90}.
 Before examining exemplar queries in-depth, we emphasize that this taxonomy is not a strict partition---would the \emph{nearest surrounder} query \cite{leeleeleong10} be a directional or distance query?
-These are really just to give a sense of what R-trees are used for, not everything they can do.
+These are just examples of R-tree applications, not an attempt at a complete list.
 
-The three queries we will consider in depth are \emph{range}, \emph{spatial join}, and \emph{nearest neighbor}.
-These three are generally accepted as the key queries to consider when thinking about R-trees.
-In examining these queries we will find that, despite their differences, they all suffer the same fundamental bottlenecks, implying general improvements for R-trees are indeed possible.
+The three query types we will consider in depth are \emph{range}, \emph{spatial join}, and \emph{nearest neighbor}.
+These three are generally accepted as the key query types to consider when thinking about R-trees.
+In examining these query types we will find that, despite their differences, they all suffer the same fundamental bottlenecks, implying general improvements for R-trees are indeed possible.
 We will also briefly mention \emph{aggregate queries}, more complex spatial operations which are built on a foundation of R-trees, but are higher-level than our exemplars.
 
 \paragraph{The Range Query}
@@ -67,8 +67,8 @@ Dealing with R-trees of varying height is a nontrivial, but natural, extension.
 
 There exists a variation of spatial join over R-trees which proceeds in a breadth-first-search fashion \cite{huangjingrundensteiner97}.
 This is motivated by the idea that understanding how the join behaves at level $k$ might better guide the iteration over the pages in level $k+1$.
-Both the original and BFS algorithms used a buffer to essentially help the algorithm efficiently recall where it is in the R-tree.
-There exist experimental comparisons between these variations \cite{papadopoulosrigauxscholl99}, and at the time they concluded buffer size was the main focus point.
+Both the original and BFS algorithms used a buffer to help the algorithm efficiently recall where it is in the R-tree.
+There exist experimental comparisons between these variations \cite{papadopoulosrigauxscholl99}, and at the time they concluded buffer size was the main factor in performance.
 
 A recent survey \cite{jacoxsamet07} has a thorough and excellent presentation of all spatial join techniques.
 There the authors attempted to distill the underlying ideas and algorithms present in the \emph{many} different spatial join papers.
@@ -83,17 +83,17 @@ Some reasoning about the properties of MINDIST allows for safe pruning of these 
 The heuristic of sorting by MINDIST is not optimal---rather, it is ``optimistic'' in the sense that if the MBRs really do reflect the nearest point, it will terminate quite quickly.
 There exist other heuristics as well in the same paper \cite{roussopouloskelleyvincent95}.
 
-The NN query is the basic distance query for other distance queries such as spatial aggregate queries (perimeter, average-area, and so on) \cite{corralalmendros-jimenez07}.
+The NN query is the foundation for other distance queries such as spatial aggregate queries (perimeter, average-area, and so on) \cite{corralalmendros-jimenez07}.
 There are more complex variations of NN, such an the \emph{aggregate} NN query.
 There the objective is to find a point $p$ such that its $k$ nearest neighbors (for fixed $k$) have minimal \emph{total} distance.
-Exact optimal is for aggregate nearest neighbors is \cite{papadiastaomouratidishui05}, according to \cite{liliyiyaowang11}.
+The optimal algorithm for aggregate nearest neighbors is \cite{papadiastaomouratidishui05}, according to \cite{liliyiyaowang11}.
 In \cite{liliyiyaowang11} NN is further generalized to \emph{flexible aggregate similarity search}, where a more abstract notion of distance and relations can be used.
 In that paper they review much of the history of NN, of which R-trees played an important part.
 They also emphasize one real weakness of R-trees: their performance does fail for large dimensional data ($>6$, in this case).
 For this case there is the R-tree variant called the X-tree \cite{berchtold2001x}.
 
 \paragraph{Aggregate queries}
-As a glimpse of what's ``beyond'' NN queries, we briefly mention two more aggregate queries: \emph{convex hull} and then \emph{skyline}.
+As a glimpse of what's ``beyond'' NN queries, we briefly discuss two more aggregate queries: \emph{convex hull} and \emph{skyline}.
 There are well-known algorithms for convex hull in a non-database setting \cite{clrs3rd}, but adapting for huge data takes real work.
 Bohm and Kriegel \cite{bohmkriegel01} did so, relying on multidimensional indices (namely, R-trees).
 This has been the foundation of important subroutines, including many of the NN queries mentioned as well as, for instance, \emph{furthest} neighbors \cite{yaolikumar09}.
@@ -101,7 +101,7 @@ This has been the foundation of important subroutines, including many of the NN 
 The skyline operator was introduced for databases in \cite{borzsonykossmannstocker01}.
 Intuitively, it seeks to find all points that are ``undominated'' in a dimension.
 The example in that original paper is to find the best, cheapest hotel: thus the skyline gives us all hotels that are better than all other hotels of greater price, or (equivalently) cheaper than all other hotels of the same or better quality.
-Where all the previous queries have been presented as something like ends in and of themselves, the skyline operator (as the name implies) is assumed to be used in conjunction with other operators.
+Unlike the other query types discussed, the skyline operator (as the name implies) is assumed to always be used in conjunction with other operators.
 A paper soon followed to implement \emph{on-line} skyline computation primarily using the NN query\cite{kossmannramsakrost02}.
 They reasoned that the NN query is best implemented via the \rstar-tree, for their purposes.
 Skyline computation remains an active area of research---\cite{zhangalhajj10} has a more thorough history and state of the art than presented here.
@@ -158,7 +158,7 @@ This idea is extended to \emph{branch grafting} \cite{schrekchen00}.
 Branch grafting was initially conceived independently of \rstar-tree force-reinsertion method, but is quite similar.
 Motivated by some of the observations of Greene \cite{greene89}, the idea is to graft node $N$'s children to a sibling node, if that would improve the shape of the tree.
 In general the idea of improving the shape of the tree by these retrospective modifications seems appealing.
-Unfortunately, in modern highly-parallel databases reorganizing a tree is often too difficult, and does bad things to the buffer \cite{beckmannseeger09}.
+Unfortunately, in modern highly-parallel databases reorganizing a tree is often too difficult, and negatively interferes with to the buffer \cite{beckmannseeger09}.
 
 We have discussed improving R-tree shape mainly under the guiding intuition that reducing \emph{overlap} is our goal.
 Can we formalize this?
@@ -166,12 +166,12 @@ One suggestion is as follows.
 The notion of overlap was formalized as the \emph{stabbing number} \cite{berggudmundssonhammarovermars00}.
 The stabbing number of a set of shapes $\mathcal S$ is the maximum number of shapes in $\mathcal S$ intersecting a point.
 Intuitively, that point ``stabs'' the most number of shapes possible.
-This lead to the first nontrivial upper-bounds on R tree operations, albeit in a static---no inserting or deleting elements---setting.
-Stabbing numbers have become a subject in their own right, and continue to be motivated by R trees and other spatial structures with (potentially) overlapping rectangles.
+This lead to the first nontrivial upper-bounds on R-tree operations, albeit in a static---no inserting or deleting elements---setting.
+Stabbing numbers have become a subject in their own right, and continue to be motivated by R-trees and other spatial structures with (potentially) overlapping rectangles.
 It was just recently shown that computing the partition of $\mathcal S$ into $r$ parts in a way such that the partitions' MBRs have minimal stabbing number is $\NP$-hard \cite{bergkhosraviverdonschotweele11}.
-This is somewhat ameliorated by their demonstrating that there is an algorithm for computing the partition exponential in $r$, which quickly becomes small in R trees.
+This is somewhat ameliorated by their demonstrating that there is an algorithm for computing the partition exponential in $r$, which quickly becomes small in R-trees.
 However, even their approximation algorithms are not yet computed competitively quickly.
-Stabbing number has recent interest from a more general geometric perspective \cite{durochermehrabi12}.
+Stabbing number has gained recent interest from a more general geometric perspective \cite{durochermehrabi12}.
 
 \paragraph{Improving Performance (Delaying Insertions)}
 We have seen some techniques to keep the tree well-formed during dynamic insertions.
@@ -184,8 +184,8 @@ This amortization reduces the number of disk I/Os needed for insertions, but the
 This idea continues to be explored \cite{biveinissaltenisjensen07}.
 
 We can extend the idea of less-dynamic insertions to its logical conclusion and consider completely static data.
-This is quite common is spatial databases: the 1950s census is unlikely to change.
-To build an index from scratch over a large database is called bulk-loading, and a brief discussion of bulk loading in R-trees can be found in \cite{berckenseeger01}.
+This is quite common in spatial databases: the 1950s census is unlikely to change.
+Building an index from scratch over a large database is called bulk-loading, and a brief discussion of bulk loading in R-trees can be found in \cite{berckenseeger01}.
 For B-trees, bulk-loading follows naturally from a sort of the data---something impossible for spatial data.
 The two main approaches for R-tree bulk loading identified by \cite{berckenseeger01} are buffer-based (from the same progenitor as the buffer R-tree just mentioned) and sampling.
 Both of these have the obvious goal of creating a well-shaped R-tree.
@@ -221,7 +221,7 @@ This is akin to a B-tree node storing its maximum key value.
 Lookup on a Hilbert tree behaves exactly as if it were an R-tree, but insertion, deletion, node-splitting, and node-merging behave exactly as if it were a B-tree, the leaves strictly ordered by their position on the Hilbert tree.
 This was the new optimal design in its introduction, beating even the \rstar-tree in its initial experiments.
 However, the Hilbert tree has a fixed curve---the curve cannot grow without essentially rebuilding the whole tree---and this limitation is not shared by the ``more'' dynamic R* tree \cite{beckmannseeger09}.
-Research in this area is ongoing, for example in determining determining \emph{which} Hilbert curve to use \cite{haverkortwalderveen11}.
+Research in this area is ongoing, for example in determining \emph{which} Hilbert curve to use \cite{haverkortwalderveen11}.
 
 A key advantage implied by the B-tree-like behavior of the Hilbert tree is that node-splitting and merging is capable of being deferred just like in a B-tree.
 This allows it to have much better space utilization \cite{kamelfaloutsos94}.
@@ -239,7 +239,7 @@ All other things being equal, an R-tree that manages to have fewer nodes immedia
 But, even in B-trees, there is a natural tradeoff between having cheap dynamic operations---insert and delete---and the time savings by having a more compact structure.
 In \cite{huanglinlin01} they extend Guttman's tree to Compact R-Trees with the following simple rule: if an entry is being inserted into a node and that node will split, instead put that entry into a \emph{sibling} to our almost-splitting node.
 Their experiments showed that it was competitive time-wise with Guttman's R-tree, but they did not compare it with the \rstar-tree.
-And they achieved almost \%100 space utilization, in contrast to the \%70 of ``normal'' R-trees.
+And they achieved almost 100\% space utilization, in contrast to the 70\% of ``normal'' R-trees.
 
 This idea has similarities to the branch grafting of \cite{schrekchen00} mentioned earlier.
 Both branch grafting and Compact R-trees are mentioned in \cite{zhanglucheng06}, which is a recent paper on storage utilization in R-trees and contains a good summary of the history.
