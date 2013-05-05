@@ -10,7 +10,8 @@ explain some basic definitions. There are three levels of resource sharing in
 a parallel system: shared everything, shared disk, and shared nothing
 \cite{thebook}. Shared everything means that all processors share all 
 resources including disk and memory. Shared disk means that each processor 
-has its own private memory but share disks. Unsurprisingly, shared nothing 
+has its own private memory but share disks with each other. Unsurprisingly, 
+in shared nothing 
 architectures each processor has its own private memory and disk and 
 communicates to another processor using some type of network. 
 Thus the basic challenge for R-tree 
@@ -38,7 +39,7 @@ has good locality but could have worse throughput on large queries.
 \paragraph{Super-node R-tree}
 In the super-node method \cite{kamel1992parallel,thebook} there is only
 one R-tree structure for the system. Each node in the structure consists of
-\emph{d} pages distributed across \emph{d} disks. When node is accessed, each
+\emph{d} pages distributed across \emph{d} disks. When a node is accessed, each
 page of the node (one page per disk) is read in parallel. This has the 
 advantage of good load balancing, but it has the disadvantage of
 always touching every disk regardless of the query.
@@ -84,12 +85,12 @@ In \cite{koudas1996declustering}, Koudas et al. describe the  Master R-tree
 (M-Rtree), which is an R-tree variant for distributed systems.
 In this structure, there are two different types of machines: \emph{master} and 
 \emph{client}. Suppose there is some R-tree $X$ that we wish to represent using 
-the M-Rtree. The master contains a R-tree structure that contains the non-leaf 
+the M-Rtree. The master contains an R-tree structure that contains the non-leaf 
 nodes of $X$, and the leaf nodes of $X$ reside in the clients as pages. The leaf 
-level in the master instead has information on which client has the desired page 
-has the form ($siteID$, $pageID$), where $siteID$ refers to the client on which
-the data resides. Note that there is only one master, and it holds the root of 
-the M-Rtree structure.
+level in the master instead has information on which client has the desired page. 
+The leaf entries are of the form ($siteID$, $pageID$), where $siteID$ refers to 
+the client on which the data resides. Note that there is only one master, and 
+it holds the root of the M-Rtree structure.
 Thus a query must contact the master, which searches the portion of the M-Rtree 
 in its memory. All clients in the resultant list (after all relevant master leaf 
 entries have been touched) of relevant $siteID$ and $pageID$ pairs are then sent 
@@ -105,7 +106,11 @@ it.
 Another variant for the shared-nothing environment is the Master-Client R-tree 
 (MC-Rtree) proposed in \cite{schnitzer1999master} by Schnitzer and Leutenegger,  
 which is similar to the 
+<<<<<<< HEAD
 M-Rtree. However, instead of having a R-tree index 
+=======
+M-Rtree in the previous section. However, instead of having an R-tree index 
+>>>>>>> Edits as per Cathrin's comments
 structure residing only in the master, each client also has a subtree. As before,
 the master holds only non-leaf nodes; however, the leaf level entries on the 
 master are of the form ($mbr$, $\mathit{siteID}$). Moreover, the clients each have R-tree % using math itals fixes weird kerning
@@ -138,7 +143,7 @@ decentralized hierarchical tree structure built with scalability and availabilit
 in mind. 
 
 In the P2P environment, each peer (machine) has a unique \emph{peerID} and holds
-an R-tree covered by a MBR (\emph{peerMBR}). The P2PR-tree is structured
+an R-tree covered by an MBR (\emph{peerMBR}). The P2PR-tree is structured
 such that the top two levels (level 0 and level 1) of the index are statically 
 assigned and lower levels are dynamically assigned. Entries in level 0 (the root)
 are called \emph{blocks} and entries in level 1 are called \emph{groups}. Each 
@@ -190,7 +195,7 @@ Both SD-Rtree and P2PR-tree are able to decentralize query handling and are able
 to scale up well. SD-Rtree has the advantage of having a completely dynamic 
 structure, but it does have additional memory cost due to having an image of the 
 index structure at each server and performance can degrade if the images are 
-obsolete.
+outdated.
 
 % ACID?
 \subsubsection{Parallel System Implementation Issues}
@@ -276,7 +281,7 @@ R-lock tree and the R-simple tree, the R-couple tree has the best search latency
 for several different concurrent workloads. 
 
 \paragraph{R-Link Tree} Interestingly, both Ng and Kameda\cite{ng1994r} and 
-Kornacker and Banks\cite{kornacker1995high} publish papers around the same time on 
+Kornacker and Banks\cite{kornacker1995high} published papers around the same time on 
 an R-tree variant called the R-link tree inspired by Lehman and Yao's work on the 
 B-link tree \cite{lehman1981efficient}. Ng and Kameda's R-link tree\cite{ng1994r} 
 adds a link pointer to each node pointing to its right neighbor on the same level and
@@ -377,14 +382,15 @@ entry based on the $oid$ and time. When an object is inserted into the
 database, it is placed in the R-tree with an entry of form 
 ($oid$, $mbr$, $t_s$, $t_e$, $p$), where $t_s$ and $t_e$ refer to the 
 start and end time with which the object corresponds. Spatial queries 
-are done as in the \rbase-tree case by traversal on the \rbase-tree 
+are done as in the \rbase-tree case by traveral of the \rbase-tree 
 structure, meaning search performance on spatial data is the same as in 
 the \rbase-tree case. Temporal queries are performed on the TSB-tree. 
 RT-trees use the method of update on change to limit data history.
 
 \paragraph{3D R-tree} 3D R-trees \cite{nascimento1999evaluation} are basically
 R-trees with time as another dimension. However, 3D R-trees cannot 
-query on data with open intervals. 3D R-trees typically take less
+easily represent data with open intervals, where the end time is unknown. 
+3D R-trees typically take less
 memory than an equivalent HR-tree and 2+3R-tree but with worse query 
 performance than an HR-tree.
 
@@ -464,7 +470,8 @@ interval. The addition of supporting three-dimensional points addresses
 the issue of dead space in the 2+3R-tree case. A TB-tree lying on top of 
 the structure is used to index into the 2-3TR-tree and retrieve objects 
 during trajectory queries. The 2-3TR-tree has a higher I/O cost than the 
-HR-tree but less pages the 2+3R-tree and 3D R-tree. This is because both
+HR-tree but accesses fewer pages than the 2+3R-tree and 3D R-tree. 
+This is because both
 trees must be accessed on a query. Abdelguerfi et al. find that the 
 2-3TR-tree has an additional benefit of having better overlap than the 
 2+3R-tree and 3D R-tree.
@@ -491,7 +498,7 @@ and future locations of objects. This is most suitable for worksets in which
 objects have predictable behavior such as projectile motion and traveling in
 straight lines. In order to model objects in this setting, information regarding
 an object's movement must also be stored. The R-tree variants in this category 
-use parametric rectangles to index the data. This means that a MBR contains
+use parametric rectangles to index the data. This means that an MBR contains
 the same objects over all time, but its shape varies. 
 
 \paragraph{TPR-tree} The Time Parameterized R-tree (TPR-tree) 
@@ -519,13 +526,13 @@ has significantly less I/O cost than the TPR-tree.
 \subsection{Applications}
 So far we have talked about many different types of R-trees, but what are they
 used for? This class of index structures are used in a vast variety of different
-applications including but not exclusive to spatial datamining, geographic 
+applications including but not exclusive to spatial data mining, geographic 
 information systems, computer aided design, science and medicine, and cloud 
 computing. We list a description of these fields and some R-tree variants used 
 in these fields below.
 
 \begin{description}
-	\item[Spatial datamining] Spatial datamining is the process of finding
+	\item[Spatial data mining] Spatial data mining is the process of finding
 	patterns within spatial datasets. Operations on the underlying R-tree 
 	index structure are used to find patterns and characteristics of the 
 	data. Examples include DBSCAN\cite{ester1996density}, a density-based 

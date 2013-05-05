@@ -46,7 +46,7 @@ dimensions and $I_{i}$ is of form $[a$,$b]$, a closed bounded interval along
 the i-th dimension. Similarly, a leaf node entry is of the form ($mbr$, $oid$), 
 where $mbr$ is the MBR containing the object, and $oid$ is the identifier for the 
 object in the database. Finally, the root node must have at least two entries
-unless if it is a leaf.
+unless it is a leaf.
 
 There are multiple operations that are associated with an R-tree, which we 
 discuss in the following sections.
@@ -61,7 +61,7 @@ the search descends into the subtree pointed to by $p$ until it reaches a leaf.
 If the leaf entry's $mbr$ overlaps with $S$, then the object ID $oid$ is 
 returned. Note that there is no worst-case performance guarantee for this
 algorithm.
-In order to answer the query, the R-tree may need only to descend down one path,
+In order to answer the query, the R-tree may only need to descend down one path,
 or may need to explore the whole tree, and the R-tree structure greatly influences
 how many nodes need exploring.
 
@@ -110,21 +110,21 @@ examined on subsequent searches by minimizing the total area of the MBRs for
 both nodes.
 Achieving this, however, is conceptually and computationally nontrivial.
 
-In the original R-tree paper, Guttman discusses three different types of node 
+In the original R-tree paper, Guttman discusses three node 
 splitting algorithms of different complexities: linear, quadratic, and 
 exponential.
 All of these try to partition the children to minimize the sum of the MBR areas of the two resulting nodes.
 The linear split algorithm is the simplest, but may often
-result in suboptimal splits since it does not at all perform an exhaustive search on
+result in suboptimal splits since it does not perform an exhaustive search on
 all possible groupings. It partitions the entries into two groups by first 
 selecting two seed entries to be the first entries in each group.
 The two entries with the highest normalized separation along any dimension are chosen.
-This is computed essentially computing a \emph{max} over the distances in each dimension.
+This is computed by finding the maximum distance among the entries in each dimension.
 Of the remaining entries, an arbitrary one is chosen and placed in the group that 
 would have the least enlargement, and we repeat.
 
 The quadratic split algorithm is identical to the linear algorithm, except the 
-entries chosen to be seeds are the ones with that have the most wasted space
+entries chosen to be seeds are the ones that would have the most wasted space
 if grouped together; in other words, the two entries that have the maximum $d$
 where $d = area(MBR_{i,j}) - area(E_{i}) - area(E_{j}) $.
 In order to compute that, we must consider all pairs, hence quadratic.
@@ -138,10 +138,9 @@ The exponential split algorithm is an exhaustive search that enumerates all poss
 groupings for the entries. Given an R-tree with $M$, the maximum number of entries
 in a node, the search space for this algorithm is on the order of $2^{M-1}$.
 
-Note that if at any point during our split algorithm one of the two nodes is so small
+Note that if at any point during the split algorithm one of the two nodes is so small
 that we need to add all the remaining nodes to ensure it has at least $m$ elements,
-we do so.
-In other words, our splits still always satisfy the desired space-usage.
+we do so. In other words, splits must always satisfy the R-tree parameters.
 
 \begin{figure}[t]
 \begin{algorithmic}
@@ -174,13 +173,14 @@ Deletion is handled by the algorithm in Figure~\ref{fig:R_Tree_Delete}. First,
 we find the leaf containing the entry to be deleted. Then, we handle the case
 where nodes are under-full by calling $CondenseTree$ on the leaf that held
 the entry. Instead of merging the under-full node with a sibling like in a 
-B-tree, the node is deleted, the other nodes in the leaf are reinserted into 
+B-tree, the node is deleted, the other entries in the leaf are reinserted into 
 the R-tree, and the ancestor MBRs are adjusted accordingly. Guttman argues that
 reinsertion has two advantages; first, it is easier to implement, and second, 
 it prevents deterioration of the R-tree.
-Again this is conceptually because spatial data does not have a strict ordering---blindly combining sibling nodes
-may result in a very poorly-grown R-tree, whereas in B-trees that is indeed the optimal decision.
-We will see in other implementations
+Again this is conceptually because spatial data does not have a strict ordering;
+blindly combining sibling nodes
+may result in a very poorly balanced R-tree, whereas in B-trees that is 
+indeed the optimal decision. We will see in other implementations
 of the R-tree that this is not the only strategy for deletion.
 
 \begin{figure}[t]
@@ -304,7 +304,7 @@ the split criteria and the distribution of entries among the two groups. In
 covered by the resultant MBRs, total margin of the resultant MBRs, and the overlapping area 
 of the MBRs. Of the algorithms examined in \cite{beckmannkriegelschneiderseeger90}, the one in 
 Figure~\ref{fig:R*-Tree_Split} has the best overall performance. In this node splitting 
-function, the axis with that minimizes the margin value is chosen for the split. Then, the 
+function, the axis that minimizes the margin value is chosen for the split. Then, the 
 distribution with the least area overlap is chosen to distribute entries. Note there is 
 non-trivial cost associated with enumerating the different distributions.
 
